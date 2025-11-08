@@ -41,24 +41,13 @@ export default function LoginPage() {
 
       <Card className="relative w-full max-w-md bg-card border-border p-8">
         {/* Logo */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-primary" />
-            </div>
-            <h1 className="text-2xl font-semibold">Lybre</h1>
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-14 h-14 rounded-xl gradient-green flex items-center justify-center mb-3 glow-green-sm">
+            <TrendingUp className="w-8 h-8 text-white" />
           </div>
-        </div>
-
-        {/* Title */}
-        <div className="text-center mb-6">
-          <h2 className="text-xl font-medium mb-2">
+          <h1 className="text-2xl">Stock Tracker</h1>
+          <p className="text-muted-foreground text-sm mt-1">
             {isSignUp ? 'Create your account' : 'Welcome back'}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {isSignUp
-              ? 'Start tracking your portfolio with AI insights'
-              : 'Sign in to your portfolio'}
           </p>
         </div>
 
@@ -103,7 +92,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+            <div className="mb-4 p-3 rounded-lg bg-red-primary/10 border border-red-primary/20 text-red-primary text-sm">
               {error}
             </div>
           )}
