@@ -85,7 +85,7 @@ export function EditStockDialog({ open, onOpenChange, holding, onUpdateStock }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
-      <DialogContent className='bg-card border-border sm:max-w-md'>
+      <DialogContent className='sm:max-w-md'>
         <DialogHeader>
           <DialogTitle className='text-base'>Edit Stock Position</DialogTitle>
           <DialogDescription className='text-xs text-muted-foreground'>
@@ -152,7 +152,7 @@ export function EditStockDialog({ open, onOpenChange, holding, onUpdateStock }: 
               </div>
             </div>
             {showCalendar && (
-              <div className='border border-border rounded-md bg-popover shadow-lg p-3 mt-2'>
+              <div className='glass-strong floating-sm rounded-md p-3 mt-2'>
                 <Calendar
                   mode='single'
                   selected={purchaseDate}

@@ -97,7 +97,7 @@ export function AddStockDialog({ open, onOpenChange, onAddStock }: AddStockDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
-      <DialogContent className='bg-card border-border sm:max-w-md'>
+      <DialogContent className='sm:max-w-md'>
         <DialogHeader>
           <DialogTitle className='text-base'>Add Stock to Portfolio</DialogTitle>
           <DialogDescription className='text-xs text-muted-foreground'>
@@ -111,7 +111,7 @@ export function AddStockDialog({ open, onOpenChange, onAddStock }: AddStockDialo
               <SelectTrigger className='bg-input border-border h-9 text-sm'>
                 <SelectValue placeholder='Select a stock' />
               </SelectTrigger>
-              <SelectContent className='bg-popover border-border z-[100]'>
+              <SelectContent className='z-[100]'>
                 {AVAILABLE_STOCKS.map((stock) => (
                   <SelectItem key={stock.ticker} value={stock.ticker} className='text-sm'>
                     {stock.ticker} - {stock.name}
@@ -180,7 +180,7 @@ export function AddStockDialog({ open, onOpenChange, onAddStock }: AddStockDialo
               </div>
             </div>
             {showCalendar && (
-              <div className='border border-border rounded-md bg-popover shadow-lg p-3 mt-2'>
+              <div className='glass-strong floating-sm rounded-md p-3 mt-2'>
                 <Calendar
                   mode='single'
                   selected={purchaseDate}
