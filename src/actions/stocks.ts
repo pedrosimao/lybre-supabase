@@ -65,12 +65,16 @@ export async function getStockPrice(ticker: string): Promise<PriceData> {
 export async function getEarnings(ticker: string): Promise<EarningsData> {
   try {
     const supabase = await createClient()
-    const earningsData = await kv.get(supabase, `earnings:${ticker}`)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('User not authenticated')
+
+    const cacheKey = `earnings:${user.id}:${ticker}`
+    const earningsData = await kv.get(supabase, cacheKey)
 
     // If no data exists, return mock data
     if (!earningsData) {
       const mockData = generateMockEarningsData(ticker)
-      await kv.set(supabase, `earnings:${ticker}`, mockData)
+      await kv.set(supabase, cacheKey, mockData)
       return mockData
     }
 
@@ -84,13 +88,16 @@ export async function getEarnings(ticker: string): Promise<EarningsData> {
 export async function getTranscript(ticker: string, quarter: string): Promise<TranscriptData> {
   try {
     const supabase = await createClient()
-    const transcriptKey = `transcript:${ticker}:${quarter}`
-    let transcriptData = await kv.get(supabase, transcriptKey)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('User not authenticated')
+
+    const cacheKey = `transcript:${user.id}:${ticker}:${quarter}`
+    let transcriptData = await kv.get(supabase, cacheKey)
 
     // If no data exists, generate mock transcript
     if (!transcriptData) {
       transcriptData = generateMockTranscript(ticker, quarter)
-      await kv.set(supabase, transcriptKey, transcriptData)
+      await kv.set(supabase, cacheKey, transcriptData)
     }
 
     return transcriptData
