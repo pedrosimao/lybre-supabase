@@ -1,6 +1,7 @@
 'use server'
 
 import * as kv from '@/lib/kv-store'
+import { createClient } from '@/lib/supabase/server'
 
 export type PriceData = {
   ticker: string
@@ -63,12 +64,13 @@ export async function getStockPrice(ticker: string): Promise<PriceData> {
 
 export async function getEarnings(ticker: string): Promise<EarningsData> {
   try {
-    const earningsData = await kv.get(`earnings:${ticker}`)
+    const supabase = await createClient()
+    const earningsData = await kv.get(supabase, `earnings:${ticker}`)
 
     // If no data exists, return mock data
     if (!earningsData) {
       const mockData = generateMockEarningsData(ticker)
-      await kv.set(`earnings:${ticker}`, mockData)
+      await kv.set(supabase, `earnings:${ticker}`, mockData)
       return mockData
     }
 
@@ -81,13 +83,14 @@ export async function getEarnings(ticker: string): Promise<EarningsData> {
 
 export async function getTranscript(ticker: string, quarter: string): Promise<TranscriptData> {
   try {
+    const supabase = await createClient()
     const transcriptKey = `transcript:${ticker}:${quarter}`
-    let transcriptData = await kv.get(transcriptKey)
+    let transcriptData = await kv.get(supabase, transcriptKey)
 
     // If no data exists, generate mock transcript
     if (!transcriptData) {
       transcriptData = generateMockTranscript(ticker, quarter)
-      await kv.set(transcriptKey, transcriptData)
+      await kv.set(supabase, transcriptKey, transcriptData)
     }
 
     return transcriptData

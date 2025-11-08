@@ -1,18 +1,9 @@
-import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 const TABLE_NAME = 'kv_store_11f03654'
 
-// Create a Supabase client with service role key for server-side operations
-function getServiceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
-
 // Set stores a key-value pair in the database
-export async function set(key: string, value: any): Promise<void> {
-  const supabase = getServiceClient()
+export async function set(supabase: SupabaseClient, key: string, value: any): Promise<void> {
   const { error } = await supabase.from(TABLE_NAME).upsert({
     key,
     value,
@@ -23,8 +14,7 @@ export async function set(key: string, value: any): Promise<void> {
 }
 
 // Get retrieves a key-value pair from the database
-export async function get(key: string): Promise<any> {
-  const supabase = getServiceClient()
+export async function get(supabase: SupabaseClient, key: string): Promise<any> {
   const { data, error } = await supabase
     .from(TABLE_NAME)
     .select('value')
@@ -37,8 +27,7 @@ export async function get(key: string): Promise<any> {
 }
 
 // Delete deletes a key-value pair from the database
-export async function del(key: string): Promise<void> {
-  const supabase = getServiceClient()
+export async function del(supabase: SupabaseClient, key: string): Promise<void> {
   const { error } = await supabase.from(TABLE_NAME).delete().eq('key', key)
   if (error) {
     throw new Error(error.message)
@@ -46,8 +35,11 @@ export async function del(key: string): Promise<void> {
 }
 
 // Sets multiple key-value pairs in the database
-export async function mset(keys: string[], values: any[]): Promise<void> {
-  const supabase = getServiceClient()
+export async function mset(
+  supabase: SupabaseClient,
+  keys: string[],
+  values: any[]
+): Promise<void> {
   const { error } = await supabase
     .from(TABLE_NAME)
     .upsert(keys.map((k, i) => ({ key: k, value: values[i] })))
@@ -57,8 +49,7 @@ export async function mset(keys: string[], values: any[]): Promise<void> {
 }
 
 // Gets multiple key-value pairs from the database
-export async function mget(keys: string[]): Promise<any[]> {
-  const supabase = getServiceClient()
+export async function mget(supabase: SupabaseClient, keys: string[]): Promise<any[]> {
   const { data, error } = await supabase.from(TABLE_NAME).select('value').in('key', keys)
   if (error) {
     throw new Error(error.message)
@@ -67,8 +58,7 @@ export async function mget(keys: string[]): Promise<any[]> {
 }
 
 // Deletes multiple key-value pairs from the database
-export async function mdel(keys: string[]): Promise<void> {
-  const supabase = getServiceClient()
+export async function mdel(supabase: SupabaseClient, keys: string[]): Promise<void> {
   const { error } = await supabase.from(TABLE_NAME).delete().in('key', keys)
   if (error) {
     throw new Error(error.message)
@@ -76,8 +66,7 @@ export async function mdel(keys: string[]): Promise<void> {
 }
 
 // Search for key-value pairs by prefix
-export async function getByPrefix(prefix: string): Promise<any[]> {
-  const supabase = getServiceClient()
+export async function getByPrefix(supabase: SupabaseClient, prefix: string): Promise<any[]> {
   const { data, error } = await supabase
     .from(TABLE_NAME)
     .select('key, value')

@@ -2,6 +2,7 @@
 
 import * as kv from '@/lib/kv-store'
 import { revalidatePath } from 'next/cache'
+import { createClient } from '@/lib/supabase/server'
 
 export type Holding = {
   id: string
@@ -26,7 +27,8 @@ export type HoldingInput = {
 
 export async function getHoldings(portfolioId: string): Promise<Holding[]> {
   try {
-    const holdings = await kv.getByPrefix(`holding:${portfolioId}:`)
+    const supabase = await createClient()
+    const holdings = await kv.getByPrefix(supabase, `holding:${portfolioId}:`)
     return holdings || []
   } catch (error) {
     console.error('Error fetching holdings:', error)
@@ -36,13 +38,14 @@ export async function getHoldings(portfolioId: string): Promise<Holding[]> {
 
 export async function addHolding(input: HoldingInput): Promise<Holding> {
   try {
+    const supabase = await createClient()
     const holdingId = `holding:${input.portfolioId}:${input.ticker}:${Date.now()}`
     const holding: Holding = {
       id: holdingId,
       ...input,
       createdAt: new Date().toISOString(),
     }
-    await kv.set(holdingId, holding)
+    await kv.set(supabase, holdingId, holding)
     revalidatePath('/portfolio')
     return holding
   } catch (error) {
@@ -56,7 +59,8 @@ export async function updateHolding(
   updates: Partial<Pick<Holding, 'quantity' | 'purchasePrice' | 'purchaseDate'>>
 ): Promise<Holding> {
   try {
-    const existingHolding = await kv.get(holdingId)
+    const supabase = await createClient()
+    const existingHolding = await kv.get(supabase, holdingId)
     if (!existingHolding) {
       throw new Error('Holding not found')
     }
@@ -67,7 +71,7 @@ export async function updateHolding(
       updatedAt: new Date().toISOString(),
     }
 
-    await kv.set(holdingId, updatedHolding)
+    await kv.set(supabase, holdingId, updatedHolding)
     revalidatePath('/portfolio')
     return updatedHolding
   } catch (error) {
@@ -78,12 +82,13 @@ export async function updateHolding(
 
 export async function deleteHolding(holdingId: string): Promise<void> {
   try {
-    const existingHolding = await kv.get(holdingId)
+    const supabase = await createClient()
+    const existingHolding = await kv.get(supabase, holdingId)
     if (!existingHolding) {
       throw new Error('Holding not found')
     }
 
-    await kv.del(holdingId)
+    await kv.del(supabase, holdingId)
     revalidatePath('/portfolio')
   } catch (error) {
     console.error('Error deleting holding:', error)
