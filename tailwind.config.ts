@@ -10,9 +10,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        border: 'hsl(var(--border) / <alpha-value>)',
-        input: 'hsl(var(--input) / <alpha-value>)',
-        ring: 'hsl(var(--ring) / <alpha-value>)',
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         primary: {
@@ -20,7 +20,7 @@ const config: Config = {
           foreground: 'hsl(var(--primary-foreground))',
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary) / <alpha-value>)',
+          DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
         },
         destructive: {
@@ -28,27 +28,27 @@ const config: Config = {
           foreground: 'hsl(var(--destructive-foreground))',
         },
         muted: {
-          DEFAULT: 'hsl(var(--muted) / <alpha-value>)',
+          DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
         },
         accent: {
-          DEFAULT: 'hsl(var(--accent) / <alpha-value>)',
+          DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
         },
         popover: {
-          DEFAULT: 'hsl(var(--popover) / <alpha-value>)',
+          DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))',
         },
         card: {
-          DEFAULT: 'hsl(var(--card) / <alpha-value>)',
+          DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
         'green-primary': 'hsl(var(--green-primary))',
         'green-light': 'hsl(var(--green-light))',
-        'green-glow': 'hsl(var(--green-glow) / <alpha-value>)',
+        'green-glow': 'hsl(var(--green-glow))',
         'red-primary': 'hsl(var(--red-primary))',
         'red-light': 'hsl(var(--red-light))',
-        'red-glow': 'hsl(var(--red-glow) / <alpha-value>)',
+        'red-glow': 'hsl(var(--red-glow))',
         chart: {
           '1': 'hsl(var(--chart-1))',
           '2': 'hsl(var(--chart-2))',
@@ -57,13 +57,13 @@ const config: Config = {
           '5': 'hsl(var(--chart-5))',
         },
         sidebar: {
-          DEFAULT: 'hsl(var(--sidebar) / <alpha-value>)',
+          DEFAULT: 'hsl(var(--sidebar))',
           foreground: 'hsl(var(--sidebar-foreground))',
           primary: 'hsl(var(--sidebar-primary))',
           'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-          accent: 'hsl(var(--sidebar-accent) / <alpha-value>)',
+          accent: 'hsl(var(--sidebar-accent))',
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-          border: 'hsl(var(--sidebar-border) / <alpha-value>)',
+          border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
       },
