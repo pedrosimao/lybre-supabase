@@ -98,7 +98,7 @@ export function StockPreviewPanel({
   const totalGainPercent = (totalGain / costBasis) * 100;
 
   return (
-    <div className="h-full overflow-y-auto p-6 space-y-6">
+    <div className="h-full overflow-y-auto p-6 space-y-6 text-foreground">
       {/* Stock Header */}
       <div>
         <h2 className="text-2xl mb-1">{holding.ticker}</h2>

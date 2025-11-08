@@ -215,7 +215,7 @@ export function TranscriptDetail({
         ) : transcript ? (
           <>
             {/* Sidebar with Summary */}
-            <div className="relative w-96 overflow-y-auto p-6 space-y-6">
+            <div className="relative w-96 overflow-y-auto p-6 space-y-6 text-foreground">
               <div className="space-y-5">
                 <div>
                   <h3 className="text-sm mb-3 flex items-center gap-2">
@@ -328,9 +328,9 @@ export function TranscriptDetail({
             </div>
 
             {/* Full Transcript */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6 text-foreground">
               <div className="max-w-4xl mx-auto space-y-4">
-                <h2 className="text-lg mb-4">
+                <h2 className="text-lg mb-4 ">
                   Full Transcript
                 </h2>
 

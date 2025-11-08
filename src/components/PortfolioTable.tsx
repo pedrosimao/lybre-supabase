@@ -63,11 +63,11 @@ export function PortfolioTable({
   }
 
   return (
-    <div className="glass-strong floating-lg rounded-3xl overflow-hidden">
+    <div className="glass-strong floating-lg rounded-3xl overflow-hidden"  >
       <Table>
         <TableHeader>
-          <TableRow className="border-border/30 hover:bg-white/5">
-            <TableHead className="w-[200px] text-xs h-10">
+          <TableRow className="border-border/30 hover:bg-white/5 ">
+            <TableHead className="w-[200px] text-xs h-10  ">
               Stock
             </TableHead>
             <TableHead className="w-[120px] text-xs h-10">
