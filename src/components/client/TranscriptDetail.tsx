@@ -211,11 +211,12 @@ export default function TranscriptDetail({
                       (highlight) => (
                         <div
                           key={highlight.id}
-                          className={`bg-card/50 backdrop-blur-sm p-2.5 cursor-pointer hover:bg-card/70 transition-colors rounded-xl border ${
-                            highlight.sentiment === 'positive'
-                              ? 'border-green-primary/30'
-                              : 'border-red-primary/30'
-                          }`}
+                          className="bg-card/50 backdrop-blur-sm p-2.5 cursor-pointer hover:bg-card/70 transition-colors rounded-xl border"
+                          style={{
+                            borderColor: highlight.sentiment === 'positive'
+                              ? 'rgba(20, 184, 166, 0.3)'  // green-primary at 30%
+                              : 'rgba(248, 113, 113, 0.3)'  // red-primary at 30%
+                          }}
                           onClick={() =>
                             scrollToHighlight(highlight.id)
                           }
