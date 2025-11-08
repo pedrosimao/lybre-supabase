@@ -211,11 +211,11 @@ export default function TranscriptDetail({
                       (highlight) => (
                         <div
                           key={highlight.id}
-                          className="bg-card/50 backdrop-blur-sm p-2.5 cursor-pointer hover:bg-card/70 transition-colors rounded-xl border"
+                          className="glass-subtle p-2.5 cursor-pointer hover:glass transition-all rounded-xl"
                           style={{
                             borderColor: highlight.sentiment === 'positive'
-                              ? 'rgba(20, 184, 166, 0.3)'  // green-primary at 30%
-                              : 'rgba(248, 113, 113, 0.3)'  // red-primary at 30%
+                              ? 'hsl(var(--green-primary) / 15%)'
+                              : 'hsl(var(--red-primary) / 15%)'
                           }}
                           onClick={() =>
                             scrollToHighlight(highlight.id)
@@ -300,11 +300,12 @@ export default function TranscriptDetail({
                             ref={(el) => {
                               highlightRefs.current[section.highlight!.id] = el
                             }}
-                            className={`p-4 rounded-lg border-l-4 transition-all ${
-                              section.highlight.sentiment === 'positive'
-                                ? 'bg-green-primary/5 border-green-primary'
-                                : 'bg-red-primary/5 border-red-primary'
-                            }`}
+                            className="glass-subtle p-4 rounded-lg border-l-2 transition-all"
+                            style={{
+                              borderLeftColor: section.highlight.sentiment === 'positive'
+                                ? 'hsl(var(--green-primary) / 40%)'
+                                : 'hsl(var(--red-primary) / 40%)'
+                            }}
                           >
                             <p className="text-sm leading-relaxed text-foreground">
                               {section.highlight.text}
@@ -312,7 +313,7 @@ export default function TranscriptDetail({
                           </div>
 
                           {/* AI Analysis */}
-                          <Card className="bg-muted/10 border-border/20 backdrop-blur-sm">
+                          <Card className="glass-subtle">
                             <div className="p-4 space-y-3">
                               <div className="flex items-start gap-3">
                                 <div
@@ -467,7 +468,7 @@ function CollapsibleTranscriptSection({ content }: { content: string }) {
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full justify-between h-auto py-2 px-4 text-xs text-muted-foreground hover:bg-muted/50 rounded-lg"
+          className="w-full justify-between h-auto py-2 px-4 text-xs text-muted-foreground hover:glass-subtle rounded-lg transition-all"
         >
           <span>{isOpen ? 'Hide' : 'Show'} transcript section</span>
           {isOpen ? (
@@ -478,7 +479,7 @@ function CollapsibleTranscriptSection({ content }: { content: string }) {
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-3">
-        <div className="p-4 bg-muted/20 rounded-lg">
+        <div className="p-4 glass-subtle rounded-lg">
           <p className="text-sm leading-relaxed text-foreground/70">
             {content}
           </p>
