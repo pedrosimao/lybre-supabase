@@ -211,7 +211,7 @@ export default function TranscriptDetail({
                       (highlight) => (
                         <Card
                           key={highlight.id}
-                          className={`bg-card/50 border backdrop-blur-sm p-2.5 cursor-pointer hover:bg-card/70 transition-colors ${
+                          className={`bg-card/50 backdrop-blur-sm p-2.5 cursor-pointer hover:bg-card/70 transition-colors border ${
                             highlight.sentiment === 'positive'
                               ? 'border-green-primary/30'
                               : 'border-red-primary/30'
@@ -311,21 +311,21 @@ export default function TranscriptDetail({
                           </div>
 
                           {/* AI Analysis */}
-                          <Card className="bg-card/50 border-border backdrop-blur-sm">
+                          <Card className="bg-muted/20 border-border/30 backdrop-blur-sm">
                             <div className="p-4 space-y-3">
                               <div className="flex items-start gap-3">
                                 <div
                                   className={`mt-0.5 p-1.5 rounded ${
                                     section.highlight.sentiment === 'positive'
-                                      ? 'bg-green-primary/10'
-                                      : 'bg-red-primary/10'
+                                      ? 'bg-green-primary/5'
+                                      : 'bg-red-primary/5'
                                   }`}
                                 >
                                   <Info
                                     className={`w-3.5 h-3.5 ${
                                       section.highlight.sentiment === 'positive'
-                                        ? 'text-green-primary'
-                                        : 'text-red-primary'
+                                        ? 'text-green-primary/70'
+                                        : 'text-red-primary/70'
                                     }`}
                                   />
                                 </div>
@@ -348,8 +348,8 @@ export default function TranscriptDetail({
                                         variant="outline"
                                         className={`text-[10px] px-2 py-0.5 ${
                                           section.highlight.sentiment === 'positive'
-                                            ? 'bg-green-primary/10 text-green-primary border-green-primary/30'
-                                            : 'bg-red-primary/10 text-red-primary border-red-primary/30'
+                                            ? 'bg-green-primary/5 text-green-primary/70 border-green-primary/20'
+                                            : 'bg-red-primary/5 text-red-primary/70 border-red-primary/20'
                                         }`}
                                       >
                                         {section.highlight.sentiment}
@@ -370,8 +370,8 @@ export default function TranscriptDetail({
                                                   className={`w-1.5 h-4 rounded-full ${
                                                     i < section.highlight!.impact
                                                       ? section.highlight!.sentiment === 'positive'
-                                                        ? 'bg-green-primary'
-                                                        : 'bg-red-primary'
+                                                        ? 'bg-green-primary/60'
+                                                        : 'bg-red-primary/60'
                                                       : 'bg-muted'
                                                   }`}
                                                 />
@@ -466,7 +466,7 @@ function CollapsibleTranscriptSection({ content }: { content: string }) {
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full justify-between h-auto py-2 px-4 text-xs text-muted-foreground hover:bg-muted/50 border border-border/50 rounded-lg"
+          className="w-full justify-between h-auto py-2 px-4 text-xs text-muted-foreground hover:bg-muted/50 rounded-lg"
         >
           <span>{isOpen ? 'Hide' : 'Show'} transcript section</span>
           {isOpen ? (
@@ -477,7 +477,7 @@ function CollapsibleTranscriptSection({ content }: { content: string }) {
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-3">
-        <div className="p-4 bg-muted/20 rounded-lg border border-border/30">
+        <div className="p-4 bg-muted/20 rounded-lg">
           <p className="text-sm leading-relaxed text-foreground/70">
             {content}
           </p>
