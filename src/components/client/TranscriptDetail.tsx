@@ -209,9 +209,9 @@ export default function TranscriptDetail({
                   <div className="space-y-2">
                     {transcript.highlights.map(
                       (highlight) => (
-                        <Card
+                        <div
                           key={highlight.id}
-                          className={`bg-card/50 backdrop-blur-sm p-2.5 cursor-pointer hover:bg-card/70 transition-colors border ${
+                          className={`bg-card/50 backdrop-blur-sm p-2.5 cursor-pointer hover:bg-card/70 transition-colors rounded-xl border ${
                             highlight.sentiment === 'positive'
                               ? 'border-green-primary/30'
                               : 'border-red-primary/30'
@@ -269,7 +269,7 @@ export default function TranscriptDetail({
                           <p className="text-[11px] text-foreground/80 leading-relaxed line-clamp-2">
                             {highlight.text}
                           </p>
-                        </Card>
+                        </div>
                       ),
                     )}
                   </div>
@@ -311,21 +311,21 @@ export default function TranscriptDetail({
                           </div>
 
                           {/* AI Analysis */}
-                          <Card className="bg-muted/20 border-border/30 backdrop-blur-sm">
+                          <Card className="bg-muted/10 border-border/20 backdrop-blur-sm">
                             <div className="p-4 space-y-3">
                               <div className="flex items-start gap-3">
                                 <div
                                   className={`mt-0.5 p-1.5 rounded ${
                                     section.highlight.sentiment === 'positive'
-                                      ? 'bg-green-primary/5'
-                                      : 'bg-red-primary/5'
+                                      ? 'bg-green-primary/3'
+                                      : 'bg-red-primary/3'
                                   }`}
                                 >
                                   <Info
                                     className={`w-3.5 h-3.5 ${
                                       section.highlight.sentiment === 'positive'
-                                        ? 'text-green-primary/70'
-                                        : 'text-red-primary/70'
+                                        ? 'text-green-primary/50'
+                                        : 'text-red-primary/50'
                                     }`}
                                   />
                                 </div>
@@ -348,8 +348,8 @@ export default function TranscriptDetail({
                                         variant="outline"
                                         className={`text-[10px] px-2 py-0.5 ${
                                           section.highlight.sentiment === 'positive'
-                                            ? 'bg-green-primary/5 text-green-primary/70 border-green-primary/20'
-                                            : 'bg-red-primary/5 text-red-primary/70 border-red-primary/20'
+                                            ? 'bg-green-primary/3 text-green-primary/50 border-green-primary/15'
+                                            : 'bg-red-primary/3 text-red-primary/50 border-red-primary/15'
                                         }`}
                                       >
                                         {section.highlight.sentiment}
@@ -370,8 +370,8 @@ export default function TranscriptDetail({
                                                   className={`w-1.5 h-4 rounded-full ${
                                                     i < section.highlight!.impact
                                                       ? section.highlight!.sentiment === 'positive'
-                                                        ? 'bg-green-primary/60'
-                                                        : 'bg-red-primary/60'
+                                                        ? 'bg-green-primary/40'
+                                                        : 'bg-red-primary/40'
                                                       : 'bg-muted'
                                                   }`}
                                                 />
