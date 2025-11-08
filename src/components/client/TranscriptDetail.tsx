@@ -1,25 +1,28 @@
-import { useState, useEffect, useRef } from "react";
-import { Button } from "./ui/button";
-import { Card } from "./ui/card";
-import { Badge } from "./ui/badge";
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
+} from '@/components/ui/select'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip";
+} from '@/components/ui/tooltip'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "./ui/collapsible";
+} from '@/components/ui/collapsible'
 import {
   ArrowLeft,
   TrendingUp,
@@ -29,124 +32,76 @@ import {
   Target,
   ChevronDown,
   ChevronUp,
-} from "lucide-react";
-import {
-  projectId,
-  publicAnonKey,
-} from "../utils/supabase/info";
+} from 'lucide-react'
+import { getTranscript, TranscriptData, TranscriptHighlight, TranscriptSection } from '@/actions/stocks'
 
 interface TranscriptDetailProps {
-  ticker: string;
-  name: string;
-  onBack: () => void;
+  ticker: string
+  initialData: TranscriptData
 }
 
-interface TranscriptHighlight {
-  id: string;
-  text: string;
-  sentiment: "positive" | "negative";
-  impact: number; // 1-5
-  explanation: string;
-  aiInsight: string;
-}
-
-interface TranscriptSection {
-  type: "highlight" | "regular";
-  content: string;
-  highlight?: TranscriptHighlight;
-}
-
-interface TranscriptData {
-  quarter: string;
-  date: string;
-  summary: string[];
-  highlights: TranscriptHighlight[];
-  sections: TranscriptSection[];
-}
-
-export function TranscriptDetail({
+export default function TranscriptDetail({
   ticker,
-  name,
-  onBack,
+  initialData,
 }: TranscriptDetailProps) {
-  const [selectedQuarter, setSelectedQuarter] =
-    useState<string>("");
-  const [transcript, setTranscript] =
-    useState<TranscriptData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const router = useRouter()
+  const [selectedQuarter, setSelectedQuarter] = useState<string>(initialData.quarter)
+  const [transcript, setTranscript] = useState<TranscriptData | null>(initialData)
+  const [loading, setLoading] = useState(false)
   const highlightRefs = useRef<{
-    [key: string]: HTMLDivElement | null;
-  }>({});
+    [key: string]: HTMLDivElement | null
+  }>({})
 
   // Generate available quarters (last 5 years)
-  const quarters = generateQuarters();
+  const quarters = generateQuarters()
 
   useEffect(() => {
-    if (quarters.length > 0 && !selectedQuarter) {
-      setSelectedQuarter(quarters[0].value);
+    if (selectedQuarter && selectedQuarter !== transcript?.quarter) {
+      fetchTranscript()
     }
-  }, [quarters]);
-
-  useEffect(() => {
-    if (selectedQuarter) {
-      fetchTranscript();
-    }
-  }, [selectedQuarter, ticker]);
+  }, [selectedQuarter, ticker])
 
   const fetchTranscript = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-11f03654/transcript/${ticker}/${selectedQuarter}`,
-        {
-          headers: {
-            Authorization: `Bearer ${publicAnonKey}`,
-          },
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch transcript");
-      }
-
-      const data = await response.json();
-      setTranscript(data.transcript);
+      const data = await getTranscript(ticker, selectedQuarter)
+      setTranscript(data)
     } catch (error) {
-      console.error("Error fetching transcript:", error);
+      console.error('Error fetching transcript:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const scrollToHighlight = (highlightId: string) => {
-    const element = highlightRefs.current[highlightId];
+    const element = highlightRefs.current[highlightId]
     if (element) {
       element.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+        behavior: 'smooth',
+        block: 'center',
+      })
       element.classList.add(
-        "ring-2",
-        "ring-primary",
-        "ring-offset-2",
-        "ring-offset-background",
-      );
+        'ring-2',
+        'ring-primary',
+        'ring-offset-2',
+        'ring-offset-background',
+      )
       setTimeout(() => {
         element.classList.remove(
-          "ring-2",
-          "ring-primary",
-          "ring-offset-2",
-          "ring-offset-background",
-        );
-      }, 2000);
+          'ring-2',
+          'ring-primary',
+          'ring-offset-2',
+          'ring-offset-background',
+        )
+      }, 2000)
     }
-  };
+  }
 
   const getImpactColor = (impact: number) => {
-    if (impact >= 4) return "text-primary";
-    if (impact >= 3) return "text-yellow-500";
-    return "text-muted-foreground";
-  };
+    if (impact >= 4) return 'text-primary'
+    if (impact >= 3) return 'text-yellow-500'
+    return 'text-muted-foreground'
+  }
 
   return (
     <div className="h-full flex flex-col bg-background relative overflow-hidden">
@@ -155,7 +110,7 @@ export function TranscriptDetail({
         <div className="absolute top-0 right-1/3 w-[500px] h-[500px] bg-primary/6 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '10s' }} />
         <div className="absolute bottom-0 left-1/3 w-[400px] h-[400px] bg-destructive/4 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '12s', animationDelay: '3s' }} />
       </div>
-      
+
       {/* Header */}
       <header className="relative border-b border-border/50 px-6 py-4 glass floating-sm z-10 text-muted-foreground">
         <div className="flex items-center justify-between">
@@ -163,7 +118,7 @@ export function TranscriptDetail({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onBack}
+              onClick={() => router.push('/portfolio')}
               className="h-9 px-3 text-foreground glass-subtle rounded-xl hover:bg-white/10"
             >
               <ArrowLeft className="h-4 w-4 mr-1.5" />
@@ -175,7 +130,7 @@ export function TranscriptDetail({
                 {ticker} - Earnings Transcript
               </h1>
               <p className="text-[10px] text-muted-foreground">
-                {name}
+                {transcript?.ticker || ticker}
               </p>
             </div>
           </div>
@@ -220,7 +175,7 @@ export function TranscriptDetail({
                 <div>
                   <h3 className="text-sm mb-3 flex items-center gap-2">
                     <Target className="w-4 h-4 text-primary" />
-                    AI Summary
+                    Transcript Info
                   </h3>
                   <Card className="glass-strong floating-sm p-4 space-y-3 rounded-2xl">
                     <div className="flex items-center gap-2 mb-2">
@@ -234,21 +189,16 @@ export function TranscriptDetail({
                         {transcript.date}
                       </span>
                     </div>
-                    <ul className="space-y-2">
-                      {transcript.summary.map(
-                        (point, index) => (
-                          <li
-                            key={index}
-                            className="text-[11px] leading-relaxed text-foreground/90"
-                          >
-                            <span className="text-primary mr-1.5">
-                              •
-                            </span>
-                            {point}
-                          </li>
-                        ),
-                      )}
-                    </ul>
+                    <div className="text-[11px] leading-relaxed text-foreground/90">
+                      <p>
+                        <span className="text-primary mr-1.5">•</span>
+                        {transcript.highlights.length} key highlights identified
+                      </p>
+                      <p>
+                        <span className="text-primary mr-1.5">•</span>
+                        {transcript.sections.length} transcript sections
+                      </p>
+                    </div>
                   </Card>
                 </div>
 
@@ -258,13 +208,13 @@ export function TranscriptDetail({
                   </h3>
                   <div className="space-y-2">
                     {transcript.highlights.map(
-                      (highlight, index) => (
+                      (highlight) => (
                         <Card
                           key={highlight.id}
                           className={`bg-card/50 border backdrop-blur-sm p-2.5 cursor-pointer hover:bg-card/70 transition-colors ${
-                            highlight.sentiment === "positive"
-                              ? "border-green-primary/30"
-                              : "border-red-primary/30"
+                            highlight.sentiment === 'positive'
+                              ? 'border-green-primary/30'
+                              : 'border-red-primary/30'
                           }`}
                           onClick={() =>
                             scrollToHighlight(highlight.id)
@@ -276,13 +226,13 @@ export function TranscriptDetail({
                                 variant="outline"
                                 className={`text-[10px] px-1.5 py-0 ${
                                   highlight.sentiment ===
-                                  "positive"
-                                    ? "bg-green-primary/10 text-green-primary border-green-primary/30"
-                                    : "bg-red-primary/10 text-red-primary border-red-primary/30"
+                                  'positive'
+                                    ? 'bg-green-primary/10 text-green-primary border-green-primary/30'
+                                    : 'bg-red-primary/10 text-red-primary border-red-primary/30'
                                 }`}
                               >
                                 {highlight.sentiment ===
-                                "positive" ? (
+                                'positive' ? (
                                   <TrendingUp className="w-2.5 h-2.5 mr-0.5" />
                                 ) : (
                                   <TrendingDown className="w-2.5 h-2.5 mr-0.5" />
@@ -303,7 +253,7 @@ export function TranscriptDetail({
                                               ? getImpactColor(
                                                   highlight.impact,
                                                 )
-                                              : "bg-muted"
+                                              : 'bg-muted'
                                           }`}
                                         />
                                       ),
@@ -342,17 +292,17 @@ export function TranscriptDetail({
                   transcript.sections.map(
                   (section, index) => (
                     <div key={index} className="space-y-3">
-                      {section.type === "highlight" && section.highlight ? (
+                      {section.type === 'highlight' && section.highlight ? (
                         <>
                           {/* Highlighted Text */}
                           <div
-                            ref={(el) =>
-                              (highlightRefs.current[section.highlight!.id] = el)
-                            }
+                            ref={(el) => {
+                              highlightRefs.current[section.highlight!.id] = el
+                            }}
                             className={`p-4 rounded-lg border-l-4 transition-all ${
-                              section.highlight.sentiment === "positive"
-                                ? "bg-green-primary/5 border-green-primary"
-                                : "bg-red-primary/5 border-red-primary"
+                              section.highlight.sentiment === 'positive'
+                                ? 'bg-green-primary/5 border-green-primary'
+                                : 'bg-red-primary/5 border-red-primary'
                             }`}
                           >
                             <p className="text-sm leading-relaxed text-foreground">
@@ -366,16 +316,16 @@ export function TranscriptDetail({
                               <div className="flex items-start gap-3">
                                 <div
                                   className={`mt-0.5 p-1.5 rounded ${
-                                    section.highlight.sentiment === "positive"
-                                      ? "bg-green-primary/10"
-                                      : "bg-red-primary/10"
+                                    section.highlight.sentiment === 'positive'
+                                      ? 'bg-green-primary/10'
+                                      : 'bg-red-primary/10'
                                   }`}
                                 >
                                   <Info
                                     className={`w-3.5 h-3.5 ${
-                                      section.highlight.sentiment === "positive"
-                                        ? "text-green-primary"
-                                        : "text-red-primary"
+                                      section.highlight.sentiment === 'positive'
+                                        ? 'text-green-primary'
+                                        : 'text-red-primary'
                                     }`}
                                   />
                                 </div>
@@ -397,9 +347,9 @@ export function TranscriptDetail({
                                       <Badge
                                         variant="outline"
                                         className={`text-[10px] px-2 py-0.5 ${
-                                          section.highlight.sentiment === "positive"
-                                            ? "bg-green-primary/10 text-green-primary border-green-primary/30"
-                                            : "bg-red-primary/10 text-red-primary border-red-primary/30"
+                                          section.highlight.sentiment === 'positive'
+                                            ? 'bg-green-primary/10 text-green-primary border-green-primary/30'
+                                            : 'bg-red-primary/10 text-red-primary border-red-primary/30'
                                         }`}
                                       >
                                         {section.highlight.sentiment}
@@ -419,10 +369,10 @@ export function TranscriptDetail({
                                                   key={i}
                                                   className={`w-1.5 h-4 rounded-full ${
                                                     i < section.highlight!.impact
-                                                      ? section.highlight!.sentiment === "positive"
-                                                        ? "bg-green-primary"
-                                                        : "bg-red-primary"
-                                                      : "bg-muted"
+                                                      ? section.highlight!.sentiment === 'positive'
+                                                        ? 'bg-green-primary'
+                                                        : 'bg-red-primary'
+                                                      : 'bg-muted'
                                                   }`}
                                                 />
                                               ))}
@@ -480,15 +430,15 @@ export function TranscriptDetail({
         )}
       </div>
     </div>
-  );
+  )
 }
 
 function generateQuarters() {
-  const quarters = [];
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
-  const currentQuarter = Math.floor(currentMonth / 3) + 1;
+  const quarters = []
+  const currentDate = new Date()
+  const currentYear = currentDate.getFullYear()
+  const currentMonth = currentDate.getMonth()
+  const currentQuarter = Math.floor(currentMonth / 3) + 1
 
   for (
     let year = currentYear;
@@ -496,20 +446,20 @@ function generateQuarters() {
     year--
   ) {
     const maxQuarter =
-      year === currentYear ? currentQuarter : 4;
+      year === currentYear ? currentQuarter : 4
     for (let q = maxQuarter; q >= 1; q--) {
       quarters.push({
         value: `${year}-Q${q}`,
         label: `Q${q} ${year}`,
-      });
+      })
     }
   }
 
-  return quarters;
+  return quarters
 }
 
 function CollapsibleTranscriptSection({ content }: { content: string }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -518,7 +468,7 @@ function CollapsibleTranscriptSection({ content }: { content: string }) {
           variant="ghost"
           className="w-full justify-between h-auto py-2 px-4 text-xs text-muted-foreground hover:bg-muted/50 border border-border/50 rounded-lg"
         >
-          <span>{isOpen ? "Hide" : "Show"} transcript section</span>
+          <span>{isOpen ? 'Hide' : 'Show'} transcript section</span>
           {isOpen ? (
             <ChevronUp className="w-3.5 h-3.5" />
           ) : (
@@ -534,5 +484,5 @@ function CollapsibleTranscriptSection({ content }: { content: string }) {
         </div>
       </CollapsibleContent>
     </Collapsible>
-  );
+  )
 }

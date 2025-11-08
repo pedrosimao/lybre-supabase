@@ -20,11 +20,13 @@ import {
 
 interface Holding {
   id: string;
+  portfolioId: string;
   ticker: string;
   name: string;
   quantity: number;
   purchasePrice: number;
   purchaseDate: string;
+  createdAt: string;
 }
 
 interface HoldingWithPrice extends Holding {
@@ -36,11 +38,11 @@ interface HoldingWithPrice extends Holding {
 
 interface PortfolioTableProps {
   holdings: HoldingWithPrice[];
-  onSelectHolding: (holding: Holding) => void;
+  onSelectHolding: (holding: HoldingWithPrice) => void;
   selectedHoldingId: string | null;
-  onEditHolding: (holding: Holding) => void;
+  onEditHolding: (holding: HoldingWithPrice) => void;
   onDeleteHolding: (holdingId: string) => void;
-  onViewTranscript: (holding: Holding) => void;
+  onViewTranscript: (holding: HoldingWithPrice) => void;
 }
 
 export function PortfolioTable({
