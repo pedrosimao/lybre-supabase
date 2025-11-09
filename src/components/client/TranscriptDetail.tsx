@@ -209,14 +209,13 @@ export default function TranscriptDetail({
                   <div className="space-y-2">
                     {transcript.highlights.map(
                       (highlight) => (
-                        <div
+                        <Card
                           key={highlight.id}
-                          className="glass-subtle p-2.5 cursor-pointer hover:glass transition-all rounded-xl"
-                          style={{
-                            borderColor: highlight.sentiment === 'positive'
-                              ? 'hsl(var(--green-primary) / 15%)'
-                              : 'hsl(var(--red-primary) / 15%)'
-                          }}
+                          className={`bg-card/50 border backdrop-blur-sm p-2.5 cursor-pointer hover:bg-card/70 transition-colors ${
+                            highlight.sentiment === 'positive'
+                              ? 'border-green-primary/30'
+                              : 'border-red-primary/30'
+                          }`}
                           onClick={() =>
                             scrollToHighlight(highlight.id)
                           }
@@ -270,7 +269,7 @@ export default function TranscriptDetail({
                           <p className="text-[11px] text-foreground/80 leading-relaxed line-clamp-2">
                             {highlight.text}
                           </p>
-                        </div>
+                        </Card>
                       ),
                     )}
                   </div>
@@ -300,12 +299,11 @@ export default function TranscriptDetail({
                             ref={(el) => {
                               highlightRefs.current[section.highlight!.id] = el
                             }}
-                            className="glass-subtle p-4 rounded-lg border-l-2 transition-all"
-                            style={{
-                              borderLeftColor: section.highlight.sentiment === 'positive'
-                                ? 'hsl(var(--green-primary) / 40%)'
-                                : 'hsl(var(--red-primary) / 40%)'
-                            }}
+                            className={`p-4 rounded-lg border-l-4 transition-all ${
+                              section.highlight.sentiment === 'positive'
+                                ? 'bg-green-primary/5 border-green-primary'
+                                : 'bg-red-primary/5 border-red-primary'
+                            }`}
                           >
                             <p className="text-sm leading-relaxed text-foreground">
                               {section.highlight.text}
@@ -313,7 +311,7 @@ export default function TranscriptDetail({
                           </div>
 
                           {/* AI Analysis */}
-                          <Card className="glass-subtle">
+                          <Card className="bg-card/50 border-border backdrop-blur-sm">
                             <div className="p-4 space-y-3">
                               <div className="flex items-start gap-3">
                                 <div
@@ -468,7 +466,7 @@ function CollapsibleTranscriptSection({ content }: { content: string }) {
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full justify-between h-auto py-2 px-4 text-xs text-muted-foreground hover:glass-subtle rounded-lg transition-all"
+          className="w-full justify-between h-auto py-2 px-4 text-xs text-muted-foreground hover:bg-muted/50 rounded-lg"
         >
           <span>{isOpen ? 'Hide' : 'Show'} transcript section</span>
           {isOpen ? (
@@ -479,7 +477,7 @@ function CollapsibleTranscriptSection({ content }: { content: string }) {
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-3">
-        <div className="p-4 glass-subtle rounded-lg">
+        <div className="p-4 bg-muted/20 rounded-lg">
           <p className="text-sm leading-relaxed text-foreground/70">
             {content}
           </p>

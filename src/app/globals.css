@@ -154,19 +154,19 @@
 @layer utilities {
   /* Glow effects for modern look */
   .glow-green {
-    box-shadow: 0 0 20px hsl(var(--green-glow) / 30%), 0 0 40px hsl(var(--green-glow) / 30%);
+    box-shadow: 0 0 20px rgba(20, 184, 166, 0.3), 0 0 40px rgba(20, 184, 166, 0.3);
   }
 
   .glow-green-sm {
-    box-shadow: 0 0 10px hsl(var(--green-glow) / 30%);
+    box-shadow: 0 0 10px rgba(20, 184, 166, 0.3);
   }
 
   .glow-red {
-    box-shadow: 0 0 20px hsl(var(--red-glow) / 30%), 0 0 40px hsl(var(--red-glow) / 30%);
+    box-shadow: 0 0 20px rgba(248, 113, 113, 0.3), 0 0 40px rgba(248, 113, 113, 0.3);
   }
 
   .glow-red-sm {
-    box-shadow: 0 0 10px hsl(var(--red-glow) / 30%);
+    box-shadow: 0 0 10px rgba(248, 113, 113, 0.3);
   }
 
   .gradient-green {
@@ -179,24 +179,24 @@
 
   /* Apple Liquid Glass Effects */
   .glass {
-    background: hsl(var(--glass-bg) / 5%);
+    background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid hsl(var(--glass-border) / 15%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
   }
 
   .glass-strong {
-    background: hsl(var(--glass-bg) / 8%);
+    background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(24px) saturate(200%);
     -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border: 1px solid hsl(var(--glass-border) / 18%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
   }
 
   .glass-subtle {
-    background: hsl(var(--glass-bg) / 3%);
+    background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
-    border: 1px solid hsl(var(--glass-border) / 8%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .floating {
