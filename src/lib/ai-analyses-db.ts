@@ -73,17 +73,23 @@ export async function fetchAIAnalysis(
   quarter: number,
   llmModel?: string
 ): Promise<AIAnalysisRecord | null> {
-  try {
-    console.log('[fetchAIAnalysis] Querying database:', {
-      symbol,
-      year,
-      quarter,
-      llmModel: llmModel || 'ANY',
-    })
+  console.log('[fetchAIAnalysis] === FUNCTION START ===')
+  console.log('[fetchAIAnalysis] Raw parameters received:', {
+    symbol,
+    year,
+    quarter,
+    llmModel,
+    llmModelType: typeof llmModel,
+    llmModelIsUndefined: llmModel === undefined,
+    llmModelIsNull: llmModel === null,
+  })
 
+  try {
     const supabase = await createClient()
+    console.log('[fetchAIAnalysis] ✓ Supabase client created')
 
     // First, let's query without the model filter to see what's available
+    console.log('[fetchAIAnalysis] → Running debug query (ALL records for this symbol/year/quarter)...')
     const { data: allRecords, error: debugError } = await supabase
       .from('ai_analyses')
       .select('symbol, year, quarter, llm_model')
@@ -91,13 +97,23 @@ export async function fetchAIAnalysis(
       .eq('year', year)
       .eq('quarter', quarter)
 
-    console.log('[fetchAIAnalysis] Available records for this symbol/year/quarter:', allRecords)
+    console.log('[fetchAIAnalysis] ✓ Debug query completed')
+    console.log('[fetchAIAnalysis] → Debug results:')
+    console.log('[fetchAIAnalysis]   - Records found:', allRecords?.length || 0)
+    console.log('[fetchAIAnalysis]   - Records:', JSON.stringify(allRecords, null, 2))
 
     if (debugError) {
-      console.log('[fetchAIAnalysis] Debug query error:', debugError)
+      console.log('[fetchAIAnalysis] ⚠ Debug query error:', debugError)
     }
 
-    // Build the query
+    if (!allRecords || allRecords.length === 0) {
+      console.log('[fetchAIAnalysis] ⚠ No records exist in database for this symbol/year/quarter combination')
+      console.log('[fetchAIAnalysis] === FUNCTION END (NO RECORDS IN DB) ===')
+      return null
+    }
+
+    // Build the main query
+    console.log('[fetchAIAnalysis] → Building main query...')
     let query = supabase
       .from('ai_analyses')
       .select('*')
@@ -106,17 +122,22 @@ export async function fetchAIAnalysis(
       .eq('quarter', quarter)
 
     // Only filter by model if specified
-    if (llmModel) {
+    if (llmModel !== undefined && llmModel !== null) {
+      console.log('[fetchAIAnalysis] → Filtering by llm_model:', llmModel)
       query = query.eq('llm_model', llmModel)
+    } else {
+      console.log('[fetchAIAnalysis] → NOT filtering by llm_model (accepting any model)')
     }
 
     // Order by date and get the most recent one
     query = query.order('analysis_date', { ascending: false }).limit(1)
 
+    console.log('[fetchAIAnalysis] → Executing main query...')
     const { data, error } = await query.maybeSingle()
+    console.log('[fetchAIAnalysis] ✓ Main query completed')
 
     if (error) {
-      console.log('[fetchAIAnalysis] Database error:', {
+      console.log('[fetchAIAnalysis] ✗ Database error:', {
         code: error.code,
         message: error.message,
         details: error.details,
@@ -125,11 +146,12 @@ export async function fetchAIAnalysis(
     }
 
     if (!data) {
-      console.log('[fetchAIAnalysis] No data found for query')
+      console.log('[fetchAIAnalysis] ⚠ Main query returned no data')
+      console.log('[fetchAIAnalysis] === FUNCTION END (NO MATCH) ===')
       return null
     }
 
-    console.log('[fetchAIAnalysis] Found record:', {
+    console.log('[fetchAIAnalysis] ✓ Found record:', {
       id: data.id,
       symbol: data.symbol,
       year: data.year,
@@ -141,12 +163,15 @@ export async function fetchAIAnalysis(
     // Validate and sanitize the analysis array
     const validatedAnalysis = validateAnalysisArray(data.analysis)
 
+    console.log('[fetchAIAnalysis] ✓ Validation complete, returning record')
+    console.log('[fetchAIAnalysis] === FUNCTION END (SUCCESS) ===')
     return {
       ...data,
       analysis: validatedAnalysis
     } as AIAnalysisRecord
   } catch (error) {
-    console.error(`Error fetching AI analysis for ${symbol} ${year} Q${quarter}:`, error)
+    console.error('[fetchAIAnalysis] === FUNCTION END (ERROR) ===')
+    console.error('[fetchAIAnalysis] Caught error:', error)
     throw error
   }
 }
