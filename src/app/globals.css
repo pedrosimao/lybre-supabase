@@ -49,25 +49,25 @@
   }
 
   .dark {
-    --background: 207 52% 9%;
+    --background: 217 19% 10%;
     --foreground: 220 13% 91%;
-    --card: 0 0% 100%;
+    --card: 0 0% 100% / 0.03;
     --card-foreground: 220 13% 91%;
-    --popover: 218 28% 13%;
+    --popover: 218 28% 13% / 0.95;
     --popover-foreground: 220 13% 91%;
     --primary: 173 80% 40%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 100%;
+    --secondary: 0 0% 100% / 0.05;
     --secondary-foreground: 220 13% 91%;
-    --muted: 0 0% 100%;
+    --muted: 0 0% 100% / 0.04;
     --muted-foreground: 215 16% 65%;
-    --accent: 0 0% 100%;
+    --accent: 0 0% 100% / 0.06;
     --accent-foreground: 220 13% 91%;
     --destructive: 0 73% 71%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 100%;
-    --input: 0 0% 100%;
-    --ring: 176 60% 50%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.03;
+    --ring: 173 80% 40%;
 
     /* Chart colors */
     --chart-1: 264 65% 45%;
@@ -84,9 +84,9 @@
     --red-light: 0 73% 82%;
     --red-glow: 0 73% 71%;
 
-    /* Glass morphism */
-    --glass-bg: 0 0% 100%;
-    --glass-border: 0 0% 100%;
+    /* Glass morphism - not used with HSL format, defined in utilities */
+    --glass-bg: 0 0% 100% / 0.05;
+    --glass-border: 0 0% 100% / 0.15;
   }
 
   * {
@@ -179,24 +179,24 @@
 
   /* Apple Liquid Glass Effects */
   .glass {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .glass-strong {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(24px) saturate(200%);
-    -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .glass-subtle {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   .floating {

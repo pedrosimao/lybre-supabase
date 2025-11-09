@@ -220,7 +220,7 @@ export function StockPreviewPanel({
             </div>
           </Card>
         ) : (
-          <Card className='bg-card/50 border-border p-3.5 backdrop-blur-sm'>
+          <Card className='glass floating-sm p-4 rounded-2xl'>
             <p className='text-muted-foreground text-xs'>
               No earnings data available
             </p>

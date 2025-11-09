@@ -54,7 +54,7 @@ export function PortfolioTable({
     <div className='glass-strong floating-lg rounded-3xl overflow-hidden'  >
       <Table>
         <TableHeader>
-          <TableRow className='border-border/30 hover:bg-white/5 '>
+          <TableRow className='border-white/5 hover:bg-white/5 '>
             <TableHead className='w-[200px] text-xs h-10  '>
               Stock
             </TableHead>
@@ -99,7 +99,7 @@ export function PortfolioTable({
             return (
               <TableRow
                 key={holding.id}
-                className={`border-border/30 cursor-pointer transition-all ${
+                className={`border-white/5 cursor-pointer transition-all ${
                   isSelected
                     ? 'bg-white/10'
                     : 'hover:bg-white/5'
