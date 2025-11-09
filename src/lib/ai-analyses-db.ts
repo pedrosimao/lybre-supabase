@@ -71,26 +71,49 @@ export async function fetchAIAnalysis(
   symbol: string,
   year: number,
   quarter: number,
-  llmModel: string = 'claude-3-5-sonnet-20241022'
+  llmModel?: string
 ): Promise<AIAnalysisRecord | null> {
   try {
     console.log('[fetchAIAnalysis] Querying database:', {
       symbol,
       year,
       quarter,
-      llmModel,
+      llmModel: llmModel || 'ANY',
     })
 
     const supabase = await createClient()
 
-    const { data, error } = await supabase
+    // First, let's query without the model filter to see what's available
+    const { data: allRecords, error: debugError } = await supabase
+      .from('ai_analyses')
+      .select('symbol, year, quarter, llm_model')
+      .eq('symbol', symbol)
+      .eq('year', year)
+      .eq('quarter', quarter)
+
+    console.log('[fetchAIAnalysis] Available records for this symbol/year/quarter:', allRecords)
+
+    if (debugError) {
+      console.log('[fetchAIAnalysis] Debug query error:', debugError)
+    }
+
+    // Build the query
+    let query = supabase
       .from('ai_analyses')
       .select('*')
       .eq('symbol', symbol)
       .eq('year', year)
       .eq('quarter', quarter)
-      .eq('llm_model', llmModel)
-      .single()
+
+    // Only filter by model if specified
+    if (llmModel) {
+      query = query.eq('llm_model', llmModel)
+    }
+
+    // Order by date and get the most recent one
+    query = query.order('analysis_date', { ascending: false }).limit(1)
+
+    const { data, error } = await query.maybeSingle()
 
     if (error) {
       console.log('[fetchAIAnalysis] Database error:', {
@@ -98,16 +121,11 @@ export async function fetchAIAnalysis(
         message: error.message,
         details: error.details,
       })
-      if (error.code === 'PGRST116') {
-        // No rows found
-        console.log('[fetchAIAnalysis] No rows found for query')
-        return null
-      }
       throw error
     }
 
     if (!data) {
-      console.log('[fetchAIAnalysis] No data returned')
+      console.log('[fetchAIAnalysis] No data found for query')
       return null
     }
 
@@ -116,6 +134,7 @@ export async function fetchAIAnalysis(
       symbol: data.symbol,
       year: data.year,
       quarter: data.quarter,
+      llmModel: data.llm_model,
       analysisItemCount: Array.isArray(data.analysis) ? data.analysis.length : 0,
     })
 
@@ -137,22 +156,40 @@ export async function fetchAIAnalysis(
  */
 export async function fetchLatestAIAnalysis(
   symbol: string,
-  llmModel: string = 'claude-3-5-sonnet-20241022'
+  llmModel?: string
 ): Promise<AIAnalysisRecord | null> {
   try {
-    console.log('[fetchLatestAIAnalysis] Querying database:', { symbol, llmModel })
+    console.log('[fetchLatestAIAnalysis] Querying database:', { symbol, llmModel: llmModel || 'ANY' })
 
     const supabase = await createClient()
 
-    const { data, error } = await supabase
+    // First check what models are available for this symbol
+    const { data: debugData } = await supabase
+      .from('ai_analyses')
+      .select('symbol, year, quarter, llm_model, analysis_date')
+      .eq('symbol', symbol)
+      .order('year', { ascending: false })
+      .order('quarter', { ascending: false })
+      .limit(5)
+
+    console.log('[fetchLatestAIAnalysis] Recent records for symbol:', debugData)
+
+    // Build query
+    let query = supabase
       .from('ai_analyses')
       .select('*')
       .eq('symbol', symbol)
-      .eq('llm_model', llmModel)
+
+    // Only filter by model if specified
+    if (llmModel) {
+      query = query.eq('llm_model', llmModel)
+    }
+
+    const { data, error } = await query
       .order('year', { ascending: false })
       .order('quarter', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
 
     if (error) {
       console.log('[fetchLatestAIAnalysis] Database error:', {
@@ -160,16 +197,11 @@ export async function fetchLatestAIAnalysis(
         message: error.message,
         details: error.details,
       })
-      if (error.code === 'PGRST116') {
-        // No rows found
-        console.log('[fetchLatestAIAnalysis] No rows found')
-        return null
-      }
       throw error
     }
 
     if (!data) {
-      console.log('[fetchLatestAIAnalysis] No data returned')
+      console.log('[fetchLatestAIAnalysis] No data found')
       return null
     }
 
@@ -178,6 +210,7 @@ export async function fetchLatestAIAnalysis(
       symbol: data.symbol,
       year: data.year,
       quarter: data.quarter,
+      llmModel: data.llm_model,
       analysisItemCount: Array.isArray(data.analysis) ? data.analysis.length : 0,
     })
 

@@ -136,8 +136,8 @@ export async function getEarnings(ticker: string): Promise<EarningsData> {
       return cachedData
     }
 
-    // Fetch latest AI analysis from Supabase
-    const aiAnalysis = await fetchLatestAIAnalysis(normalizedTicker)
+    // Fetch latest AI analysis from Supabase (don't filter by model - accept any model)
+    const aiAnalysis = await fetchLatestAIAnalysis(normalizedTicker, undefined)
 
     if (!aiAnalysis) {
       throw new Error(
@@ -224,9 +224,9 @@ export async function getTranscript(ticker: string, quarter: string): Promise<Re
       }
     }
 
-    // Fetch AI analysis from Supabase
+    // Fetch AI analysis from Supabase (don't filter by model - accept any model)
     console.log('[getTranscript] Fetching AI analysis from database')
-    const aiAnalysis = await fetchAIAnalysis(normalizedTicker, parsed.year, parsed.quarter)
+    const aiAnalysis = await fetchAIAnalysis(normalizedTicker, parsed.year, parsed.quarter, undefined)
 
     if (!aiAnalysis) {
       console.log('[getTranscript] No AI analysis found in database')
