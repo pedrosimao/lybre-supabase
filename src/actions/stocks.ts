@@ -263,8 +263,11 @@ export async function getTranscript(ticker: string, quarter: string): Promise<Re
       }
     }
 
-    // Create transcript sections (alternating regular and highlight sections)
-    const sections: TranscriptSection[] = createTranscriptSections(highlights)
+    // Create transcript sections (pairs of regular + highlight sections)
+    const sections: TranscriptSection[] = createTranscriptSections(
+      highlights,
+      aiAnalysis.analysis
+    )
 
     const transcriptData: TranscriptData = {
       ticker: normalizedTicker,
@@ -320,7 +323,7 @@ export async function getAvailableQuarters(ticker: string): Promise<string[]> {
 function convertAIAnalysisToHighlight(item: AIAnalysisItem): TranscriptHighlight {
   return {
     id: item.id,
-    text: item.original_text,
+    text: item.highlight,  // Use highlight field for the summary card
     sentiment: item.sentiment,
     impact: item.impact,
     explanation: item.explanation,
@@ -330,16 +333,29 @@ function convertAIAnalysisToHighlight(item: AIAnalysisItem): TranscriptHighlight
 
 /**
  * Create transcript sections from highlights
- * Uses only the original_text from database - no hardcoded content
+ * Creates pairs of sections: regular (original_text) + highlight (summary)
  */
-function createTranscriptSections(highlights: TranscriptHighlight[]): TranscriptSection[] {
+function createTranscriptSections(
+  highlights: TranscriptHighlight[],
+  analysisItems: AIAnalysisItem[]
+): TranscriptSection[] {
   const sections: TranscriptSection[] = []
 
-  // Add each highlight as a section (no hardcoded intro/outro text)
-  highlights.forEach((highlight) => {
+  highlights.forEach((highlight, index) => {
+    const originalItem = analysisItems[index]
+
+    // First: Add regular section with full original_text (collapsible)
+    if (originalItem?.original_text) {
+      sections.push({
+        type: 'regular',
+        content: originalItem.original_text,
+      })
+    }
+
+    // Second: Add highlight section with summary (colored card with AI analysis)
     sections.push({
       type: 'highlight',
-      content: highlight.text,
+      content: highlight.text,  // This is the highlight field (short summary)
       highlight: highlight,
     })
   })
