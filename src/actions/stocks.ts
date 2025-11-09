@@ -2,6 +2,14 @@
 
 import * as kv from '@/lib/kv-store'
 import { createClient } from '@/lib/supabase/server'
+import { fetchQuote, fetchHistoricalPrices } from '@/lib/fmp-api'
+import {
+  fetchLatestAIAnalysis,
+  fetchAIAnalysis,
+  parseQuarterString,
+  formatQuarterString,
+  type AIAnalysisItem,
+} from '@/lib/ai-analyses-db'
 
 export type PriceData = {
   ticker: string
@@ -44,198 +52,303 @@ export type TranscriptData = {
 
 export async function getStockPrice(ticker: string): Promise<PriceData> {
   try {
-    // Generate mock price data
-    const basePrice = Math.random() * 500 + 50
-    const change = (Math.random() - 0.5) * 20
-    const changePercent = (change / basePrice) * 100
+    // Validate ticker
+    if (!ticker || ticker.trim() === '') {
+      throw new Error('Invalid ticker symbol')
+    }
+
+    // Fetch real-time quote from FMP API
+    const quote = await fetchQuote(ticker.trim().toUpperCase())
+
+    // Validate quote data
+    if (!quote || typeof quote.price !== 'number') {
+      throw new Error(`Invalid price data received for ${ticker}`)
+    }
+
+    // Fetch historical prices for chart (30 days)
+    const historicalPrices = await fetchHistoricalPrices(ticker.trim().toUpperCase(), 30)
+
+    // Validate historical data
+    if (!Array.isArray(historicalPrices) || historicalPrices.length === 0) {
+      console.warn(`No historical data for ${ticker}, using current price only`)
+      // Fallback: create minimal history with just current price
+      const today = new Date().toISOString().split('T')[0]
+      return {
+        ticker: quote.symbol,
+        price: quote.price,
+        change: quote.change,
+        changePercent: quote.changesPercentage,
+        history: [{ date: today, price: quote.price }],
+      }
+    }
+
+    // Convert historical prices to the format expected by the app
+    const history = historicalPrices.map((price) => ({
+      date: price.date,
+      price: price.close,
+    }))
 
     return {
-      ticker,
-      price: basePrice,
-      change,
-      changePercent,
-      history: generatePriceHistory(basePrice),
+      ticker: quote.symbol,
+      price: quote.price,
+      change: quote.change,
+      changePercent: quote.changesPercentage,
+      history,
     }
   } catch (error) {
-    console.error('Error fetching price data:', error)
-    throw new Error('Failed to fetch price data')
+    console.error(`Error fetching price data for ${ticker}:`, error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    throw new Error(`Failed to fetch price data for ${ticker}: ${errorMessage}`)
   }
 }
 
 export async function getEarnings(ticker: string): Promise<EarningsData> {
   try {
+    // Validate ticker
+    if (!ticker || ticker.trim() === '') {
+      throw new Error('Invalid ticker symbol')
+    }
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('User not authenticated')
 
-    const cacheKey = `earnings:${user.id}:${ticker}`
-    const earningsData = await kv.get(supabase, cacheKey)
+    const normalizedTicker = ticker.trim().toUpperCase()
+    const cacheKey = `earnings:${user.id}:${normalizedTicker}`
+    const cachedData = await kv.get(supabase, cacheKey)
 
-    // If no data exists, return mock data
-    if (!earningsData) {
-      const mockData = generateMockEarningsData(ticker)
-      await kv.set(supabase, cacheKey, mockData)
-      return mockData
+    // If cached data exists, return it
+    if (cachedData) {
+      return cachedData
     }
+
+    // Fetch latest AI analysis from Supabase
+    const aiAnalysis = await fetchLatestAIAnalysis(normalizedTicker)
+
+    if (!aiAnalysis) {
+      throw new Error(
+        `No earnings data available for ${ticker}. Please check back later or contact support.`
+      )
+    }
+
+    // Validate analysis data
+    if (!Array.isArray(aiAnalysis.analysis) || aiAnalysis.analysis.length === 0) {
+      console.warn(`Empty analysis data for ${ticker}`)
+      throw new Error(`Earnings data for ${ticker} is incomplete. Please try again later.`)
+    }
+
+    // Convert AI analysis to earnings data format
+    const earningsData: EarningsData = {
+      ticker: normalizedTicker,
+      quarter: formatQuarterString(aiAnalysis.year, aiAnalysis.quarter),
+      date: aiAnalysis.analysis_date.split('T')[0], // Convert timestamp to date string
+      highlights: aiAnalysis.analysis.map((item) => item.highlight).filter(Boolean),
+      sentiment: determineSentiment(aiAnalysis.analysis),
+    }
+
+    // Validate highlights
+    if (earningsData.highlights.length === 0) {
+      console.warn(`No highlights found in earnings data for ${ticker}`)
+      earningsData.highlights = ['No highlights available for this quarter.']
+    }
+
+    // Cache the data
+    await kv.set(supabase, cacheKey, earningsData)
 
     return earningsData
   } catch (error) {
-    console.error('Error fetching earnings data:', error)
-    throw new Error('Failed to fetch earnings data')
+    console.error(`Error fetching earnings data for ${ticker}:`, error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    throw new Error(errorMessage)
   }
 }
 
 export async function getTranscript(ticker: string, quarter: string): Promise<TranscriptData> {
   try {
+    // Validate inputs
+    if (!ticker || ticker.trim() === '') {
+      throw new Error('Invalid ticker symbol')
+    }
+    if (!quarter || quarter.trim() === '') {
+      throw new Error('Invalid quarter')
+    }
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('User not authenticated')
 
-    const cacheKey = `transcript:${user.id}:${ticker}:${quarter}`
-    let transcriptData = await kv.get(supabase, cacheKey)
+    const normalizedTicker = ticker.trim().toUpperCase()
+    const cacheKey = `transcript:${user.id}:${normalizedTicker}:${quarter}`
+    const cachedData = await kv.get(supabase, cacheKey)
 
-    // If no data exists, generate mock transcript
-    if (!transcriptData) {
-      transcriptData = generateMockTranscript(ticker, quarter)
-      await kv.set(supabase, cacheKey, transcriptData)
+    // If cached data exists, return it
+    if (cachedData) {
+      return cachedData
     }
+
+    // Parse quarter string to get year and quarter number
+    const parsed = parseQuarterString(quarter)
+    if (!parsed) {
+      throw new Error(
+        `Invalid quarter format: ${quarter}. Expected format: "Q1 2024", "Q2 2024", etc.`
+      )
+    }
+
+    // Fetch AI analysis from Supabase
+    const aiAnalysis = await fetchAIAnalysis(normalizedTicker, parsed.year, parsed.quarter)
+
+    if (!aiAnalysis) {
+      throw new Error(
+        `No transcript data available for ${ticker} ${quarter}. This quarter may not have been analyzed yet.`
+      )
+    }
+
+    // Validate analysis data
+    if (!Array.isArray(aiAnalysis.analysis)) {
+      console.error(`Invalid analysis format for ${ticker} ${quarter}`)
+      throw new Error(`Transcript data for ${ticker} ${quarter} is corrupted. Please contact support.`)
+    }
+
+    // Convert AI analysis items to transcript highlights
+    const highlights: TranscriptHighlight[] = aiAnalysis.analysis
+      .map((item) => convertAIAnalysisToHighlight(item))
+      .filter((highlight) => highlight.text && highlight.text.trim() !== '')
+
+    // Validate highlights
+    if (highlights.length === 0) {
+      console.warn(`No valid highlights found for ${ticker} ${quarter}`)
+    }
+
+    // Create transcript sections (alternating regular and highlight sections)
+    const sections: TranscriptSection[] = createTranscriptSections(highlights)
+
+    const transcriptData: TranscriptData = {
+      ticker: normalizedTicker,
+      quarter,
+      date: aiAnalysis.analysis_date.split('T')[0],
+      sections,
+      highlights,
+    }
+
+    // Cache the data
+    await kv.set(supabase, cacheKey, transcriptData)
 
     return transcriptData
   } catch (error) {
-    console.error('Error fetching transcript:', error)
-    throw new Error('Failed to fetch transcript')
+    console.error(`Error fetching transcript for ${ticker} ${quarter}:`, error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    throw new Error(errorMessage)
+  }
+}
+
+/**
+ * Get available quarters for a ticker from the database
+ * Returns an array of quarter strings in "Q# YYYY" format
+ */
+export async function getAvailableQuarters(ticker: string): Promise<string[]> {
+  try {
+    const { fetchAvailableQuarters } = await import('@/lib/ai-analyses-db')
+    const quarters = await fetchAvailableQuarters(ticker)
+
+    return quarters.map((q) => formatQuarterString(q.year, q.quarter))
+  } catch (error) {
+    console.error(`Error fetching available quarters for ${ticker}:`, error)
+    return []
   }
 }
 
 // Helper functions
-function generatePriceHistory(basePrice: number) {
-  const history = []
-  let price = basePrice
-  for (let i = 30; i >= 0; i--) {
-    price = price + (Math.random() - 0.5) * 5
-    history.push({
-      date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      price: Math.max(price, 10),
+
+/**
+ * Convert AI analysis item from database to TranscriptHighlight format
+ */
+function convertAIAnalysisToHighlight(item: AIAnalysisItem): TranscriptHighlight {
+  return {
+    id: item.id,
+    text: item.original_text,
+    sentiment: item.sentiment,
+    impact: item.impact,
+    explanation: item.explanation,
+    aiInsight: item.ai_insight,
+  }
+}
+
+/**
+ * Create transcript sections from highlights
+ * Formats the highlights as transcript sections with context
+ */
+function createTranscriptSections(highlights: TranscriptHighlight[]): TranscriptSection[] {
+  const sections: TranscriptSection[] = []
+
+  // Add an introduction section if we have highlights
+  if (highlights.length > 0) {
+    sections.push({
+      type: 'regular',
+      content:
+        "Good afternoon, and welcome to our earnings call. Today we'll discuss our financial results and business performance. Before we begin, I'd like to remind everyone that this call may contain forward-looking statements.",
     })
   }
-  return history
-}
 
-function generateMockEarningsData(ticker: string): EarningsData {
-  const topics = [
-    'Revenue grew 23% YoY to $4.2B, beating analyst estimates of $3.9B',
-    'Operating margin expanded to 28%, up from 24% in the previous quarter',
-    'Cloud services segment showed strong momentum with 45% growth',
-    'Management raised full-year guidance, now expecting $18-19B in revenue',
-    'Customer acquisition costs decreased by 15% while retention improved',
-    'New product launches contributed $300M in incremental revenue',
-    'International markets outperformed with 35% growth vs 20% domestic',
-    'Free cash flow increased to $1.1B, representing 26% of revenue',
-  ]
-
-  return {
-    ticker,
-    quarter: 'Q3 2024',
-    date: '2024-10-28',
-    highlights: topics.slice(0, 5 + Math.floor(Math.random() * 3)),
-    sentiment: Math.random() > 0.3 ? 'positive' : 'neutral',
-  }
-}
-
-function generateMockTranscript(ticker: string, quarter: string): TranscriptData {
-  const highlights: TranscriptHighlight[] = [
-    {
-      id: 'h1',
-      text: 'Revenue for the quarter came in at $4.2 billion, representing a 23% year-over-year increase and beating consensus estimates by $300 million. This growth was primarily driven by our cloud services division which saw remarkable adoption across enterprise customers.',
-      sentiment: 'positive',
-      impact: 5,
-      explanation:
-        'Revenue beating estimates by 7.7% is a strong positive signal, indicating robust business performance and potential for continued growth.',
-      aiInsight:
-        "This substantial revenue beat suggests the company is executing well on its growth strategy. The 23% YoY growth rate is particularly impressive in the current market environment, and the fact that it's driven by cloud services (typically higher-margin) bodes well for future profitability. This could lead to positive earnings revisions.",
-    },
-    {
-      id: 'h2',
-      text: 'Operating margins expanded to 28%, up from 24% in the prior quarter and 22% in the year-ago period. This improvement reflects our disciplined cost management and the positive operating leverage we\'re achieving as we scale.',
-      sentiment: 'positive',
-      impact: 4,
-      explanation:
-        'Margin expansion of 400 basis points year-over-year demonstrates improving operational efficiency and pricing power.',
-      aiInsight:
-        'The consistent margin expansion is a key indicator of business quality. Moving from 22% to 28% in one year while growing revenue 23% shows strong operational leverage. This suggests the company has pricing power and is not sacrificing margins for growth—a sign of a healthy, sustainable business model.',
-    },
-    {
-      id: 'h3',
-      text: "Customer acquisition costs have risen by 18% compared to last quarter, though we're seeing strong unit economics on these new customers with an LTV/CAC ratio of 3.5x.",
-      sentiment: 'negative',
-      impact: 2,
-      explanation:
-        'Rising CAC can pressure margins if it continues, though the strong LTV/CAC ratio suggests customer economics remain healthy.',
-      aiInsight:
-        'While the 18% increase in CAC is concerning and worth monitoring, the 3.5x LTV/CAC ratio indicates the company is still acquiring customers profitably. Industry best practice suggests 3x or higher is good, so this is still in healthy territory. However, if CAC continues rising while competition intensifies, it could become problematic.',
-    },
-    {
-      id: 'h4',
-      text: "We're investing heavily in R&D, with spending up 35% year-over-year to $800 million. These investments are focused on our next-generation AI platform which we expect to launch in Q1 next year.",
-      sentiment: 'positive',
-      impact: 4,
-      explanation:
-        'Strategic R&D investment in high-growth areas like AI positions the company for long-term competitive advantage.',
-      aiInsight:
-        'The significant R&D investment shows management is thinking long-term and positioning the company for the AI revolution. While this temporarily pressures near-term profitability, it\'s a necessary investment for maintaining competitive positioning. The fact that margins are still expanding despite this increased R&D spend is particularly impressive.',
-    },
-    {
-      id: 'h5',
-      text: "International revenue declined 5% due to macroeconomic headwinds in Europe and currency fluctuations. We're seeing particular softness in our EMEA region.",
-      sentiment: 'negative',
-      impact: 3,
-      explanation:
-        'International weakness and FX headwinds indicate external challenges that could persist and impact growth trajectory.',
-      aiInsight:
-        'The 5% decline in international revenue is a red flag that needs close monitoring. While management attributes it to macro factors and FX, investors should watch for whether this is the start of a trend. If international markets represent a significant portion of the growth thesis, continued weakness here could lead to multiple compression. The company may need to demonstrate resilience in these markets or show that domestic strength can compensate.',
-    },
-    {
-      id: 'h6',
-      text: 'Free cash flow for the quarter was $1.1 billion, up 42% year-over-year, representing a 26% free cash flow margin. We\'re using this to fund our share buyback program and have repurchased $400 million in shares this quarter.',
-      sentiment: 'positive',
-      impact: 5,
-      explanation:
-        'Strong FCF generation and capital allocation through buybacks demonstrates financial strength and shareholder-friendly management.',
-      aiInsight:
-        'The 42% FCF growth outpacing revenue growth (23%) is excellent, showing strong cash conversion and working capital management. The 26% FCF margin is impressive and the $400M buyback demonstrates confidence in the business and commitment to returning capital to shareholders. This financial strength provides flexibility for both investment and shareholder returns.',
-    },
-  ]
-
-  const regularTexts = [
-    "Good afternoon, and welcome to our Q4 2024 earnings call. I'm joined today by our CFO and COO to discuss our financial results and business performance. Before we begin, I'd like to remind everyone that this call may contain forward-looking statements.",
-    "Looking at our product performance, we continued to see strong momentum across our entire portfolio. Our enterprise segment grew 31% year-over-year, while small and medium businesses grew 18%. The cross-sell opportunities we've been developing are starting to pay dividends.",
-    "From an operational perspective, we've made significant investments in automation and process improvements. Our customer support team has implemented AI-assisted ticketing that has reduced response times by 40% while maintaining high satisfaction scores. These efficiency gains are contributing to our margin expansion.",
-    "On the talent front, we've been selective in our hiring, focusing on high-impact roles in engineering and product. Our employee retention rates remain strong at 94%, which is above industry benchmarks. We're also seeing great results from our internal mobility program.",
-    "Regarding our go-to-market strategy, we've expanded our partner ecosystem significantly. We now have over 500 certified implementation partners globally, up from 320 last year. This is helping us scale more efficiently while maintaining quality standards.",
-    "In closing, we're pleased with our Q4 results and the momentum we're carrying into next year. We remain focused on sustainable growth, operational excellence, and creating long-term value for our shareholders. We'll now open it up for questions.",
-  ]
-
-  const sections: TranscriptSection[] = []
+  // Add each highlight as a section
   highlights.forEach((highlight, index) => {
-    if (index < regularTexts.length) {
-      sections.push({
-        type: 'regular',
-        content: regularTexts[index],
-      })
-    }
-
     sections.push({
       type: 'highlight',
       content: highlight.text,
       highlight: highlight,
     })
+
+    // Add a transition section between highlights (but not after the last one)
+    if (index < highlights.length - 1) {
+      sections.push({
+        type: 'regular',
+        content: 'Moving on to the next topic...',
+      })
+    }
   })
 
-  return {
-    ticker,
-    quarter,
-    date: '2024-10-28',
-    sections,
-    highlights,
+  // Add a closing section
+  if (highlights.length > 0) {
+    sections.push({
+      type: 'regular',
+      content:
+        "In closing, we're pleased with our results and the momentum we're seeing across the business. We remain focused on sustainable growth, operational excellence, and creating long-term value for our shareholders. We'll now open it up for questions.",
+    })
+  }
+
+  return sections
+}
+
+/**
+ * Determine overall sentiment from array of AI analysis items
+ */
+function determineSentiment(analysis: AIAnalysisItem[]): 'positive' | 'neutral' | 'negative' {
+  if (analysis.length === 0) {
+    return 'neutral'
+  }
+
+  // Calculate weighted sentiment score based on impact
+  let totalScore = 0
+  let totalWeight = 0
+
+  analysis.forEach((item) => {
+    const sentimentScore = item.sentiment === 'positive' ? 1 : item.sentiment === 'negative' ? -1 : 0
+    const weight = item.impact
+    totalScore += sentimentScore * weight
+    totalWeight += weight
+  })
+
+  if (totalWeight === 0) {
+    return 'neutral'
+  }
+
+  const averageScore = totalScore / totalWeight
+
+  // Threshold for positive/negative classification
+  if (averageScore > 0.2) {
+    return 'positive'
+  } else if (averageScore < -0.2) {
+    return 'negative'
+  } else {
+    return 'neutral'
   }
 }
