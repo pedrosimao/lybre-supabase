@@ -296,10 +296,16 @@ export async function getTranscript(ticker: string, quarter: string): Promise<Re
  */
 export async function getAvailableQuarters(ticker: string): Promise<string[]> {
   try {
+    console.log('[getAvailableQuarters] Fetching for ticker:', ticker)
     const { fetchAvailableQuarters } = await import('@/lib/ai-analyses-db')
-    const quarters = await fetchAvailableQuarters(ticker)
+    const quarters = await fetchAvailableQuarters(ticker.trim().toUpperCase())
 
-    return quarters.map((q) => formatQuarterString(q.year, q.quarter))
+    console.log('[getAvailableQuarters] Found quarters:', quarters)
+
+    const quarterStrings = quarters.map((q) => formatQuarterString(q.year, q.quarter))
+    console.log('[getAvailableQuarters] Formatted quarters:', quarterStrings)
+
+    return quarterStrings
   } catch (error) {
     console.error(`Error fetching available quarters for ${ticker}:`, error)
     return []

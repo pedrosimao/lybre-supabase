@@ -36,9 +36,15 @@ interface TranscriptDetailProps {
   ticker: string
   initialResult: Result<TranscriptData>
   defaultQuarter: string
+  availableQuarters: string[]
 }
 
-export default function TranscriptDetail({ ticker, initialResult, defaultQuarter }: TranscriptDetailProps) {
+export default function TranscriptDetail({
+  ticker,
+  initialResult,
+  defaultQuarter,
+  availableQuarters,
+}: TranscriptDetailProps) {
   const router = useRouter()
   const [selectedQuarter, setSelectedQuarter] = useState<string>(
     initialResult.success ? initialResult.data.quarter : defaultQuarter
@@ -46,16 +52,17 @@ export default function TranscriptDetail({ ticker, initialResult, defaultQuarter
   const [transcript, setTranscript] = useState<TranscriptData | null>(
     initialResult.success ? initialResult.data : null
   )
-  const [error, setError] = useState<string | null>(
-    initialResult.success ? null : initialResult.error
-  )
+  const [error, setError] = useState<string | null>(initialResult.success ? null : initialResult.error)
   const [loading, setLoading] = useState(false)
   const highlightRefs = useRef<{
     [key: string]: HTMLDivElement | null
   }>({})
 
-  // Generate available quarters (last 5 years)
-  const quarters = generateQuarters()
+  // Use quarters from database instead of generating them
+  const quarters = availableQuarters.map((q) => ({
+    value: q,
+    label: q,
+  }))
 
   useEffect(() => {
     if (selectedQuarter && selectedQuarter !== transcript?.quarter) {
@@ -469,26 +476,6 @@ export default function TranscriptDetail({ ticker, initialResult, defaultQuarter
       </div>
     </div>
   )
-}
-
-function generateQuarters() {
-  const quarters = []
-  const currentDate = new Date()
-  const currentYear = currentDate.getFullYear()
-  const currentMonth = currentDate.getMonth()
-  const currentQuarter = Math.floor(currentMonth / 3) + 1
-
-  for (let year = currentYear; year >= currentYear - 5; year--) {
-    const maxQuarter = year === currentYear ? currentQuarter : 4
-    for (let q = maxQuarter; q >= 1; q--) {
-      quarters.push({
-        value: `Q${q} ${year}`,  // Fixed: Use same format as label
-        label: `Q${q} ${year}`,
-      })
-    }
-  }
-
-  return quarters
 }
 
 function CollapsibleTranscriptSection({ content }: { content: string }) {

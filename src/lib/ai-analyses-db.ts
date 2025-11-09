@@ -254,29 +254,33 @@ export async function fetchLatestAIAnalysis(
 
 /**
  * Fetch all available quarters for a symbol
+ * Returns quarters that actually exist in the database (any model)
  */
 export async function fetchAvailableQuarters(
-  symbol: string,
-  llmModel: string = 'claude-3-5-sonnet-20241022'
+  symbol: string
 ): Promise<Array<{ year: number; quarter: number; date: string }>> {
   try {
+    console.log('[fetchAvailableQuarters] Fetching for symbol:', symbol)
     const supabase = await createClient()
 
     const { data, error } = await supabase
       .from('ai_analyses')
       .select('year, quarter, analysis_date')
       .eq('symbol', symbol)
-      .eq('llm_model', llmModel)
       .order('year', { ascending: false })
       .order('quarter', { ascending: false })
 
     if (error) {
+      console.error('[fetchAvailableQuarters] Database error:', error)
       throw error
     }
 
-    if (!data) {
+    if (!data || data.length === 0) {
+      console.log('[fetchAvailableQuarters] No quarters found for symbol:', symbol)
       return []
     }
+
+    console.log('[fetchAvailableQuarters] Found quarters:', data)
 
     return data.map((item: { year: number; quarter: number; analysis_date: string }) => ({
       year: item.year,
