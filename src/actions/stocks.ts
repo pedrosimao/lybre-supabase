@@ -11,6 +11,20 @@ import {
   type AIAnalysisItem,
 } from '@/lib/ai-analyses-db'
 
+// Result types for error handling
+export type SuccessResult<T> = {
+  success: true
+  data: T
+}
+
+export type ErrorResult = {
+  success: false
+  error: string
+}
+
+export type Result<T> = SuccessResult<T> | ErrorResult
+
+// Data types
 export type PriceData = {
   ticker: string
   price: number
@@ -163,50 +177,74 @@ export async function getEarnings(ticker: string): Promise<EarningsData> {
   }
 }
 
-export async function getTranscript(ticker: string, quarter: string): Promise<TranscriptData> {
+export async function getTranscript(ticker: string, quarter: string): Promise<Result<TranscriptData>> {
   try {
+    console.log('[getTranscript] Starting fetch:', { ticker, quarter })
+
     // Validate inputs
     if (!ticker || ticker.trim() === '') {
-      throw new Error('Invalid ticker symbol')
+      console.log('[getTranscript] Invalid ticker')
+      return { success: false, error: 'Invalid ticker symbol' }
     }
     if (!quarter || quarter.trim() === '') {
-      throw new Error('Invalid quarter')
+      console.log('[getTranscript] Invalid quarter')
+      return { success: false, error: 'Invalid quarter' }
     }
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('User not authenticated')
+    if (!user) {
+      console.log('[getTranscript] User not authenticated')
+      return { success: false, error: 'User not authenticated' }
+    }
 
     const normalizedTicker = ticker.trim().toUpperCase()
+    console.log('[getTranscript] Normalized ticker:', normalizedTicker)
+
     const cacheKey = `transcript:${user.id}:${normalizedTicker}:${quarter}`
     const cachedData = await kv.get(supabase, cacheKey)
 
     // If cached data exists, return it
     if (cachedData) {
-      return cachedData
+      console.log('[getTranscript] Returning cached data')
+      return { success: true, data: cachedData }
     }
+
+    console.log('[getTranscript] No cache, fetching from database')
 
     // Parse quarter string to get year and quarter number
     const parsed = parseQuarterString(quarter)
+    console.log('[getTranscript] Parsed quarter:', parsed)
+
     if (!parsed) {
-      throw new Error(
-        `Invalid quarter format: ${quarter}. Expected format: "Q1 2024", "Q2 2024", etc.`
-      )
+      console.log('[getTranscript] Failed to parse quarter:', quarter)
+      return {
+        success: false,
+        error: `Invalid quarter format: "${quarter}". Expected format: "Q1 2024", "Q2 2024", etc.`,
+      }
     }
 
     // Fetch AI analysis from Supabase
+    console.log('[getTranscript] Fetching AI analysis from database')
     const aiAnalysis = await fetchAIAnalysis(normalizedTicker, parsed.year, parsed.quarter)
 
     if (!aiAnalysis) {
-      throw new Error(
-        `No transcript data available for ${ticker} ${quarter}. This quarter may not have been analyzed yet.`
-      )
+      console.log('[getTranscript] No AI analysis found in database')
+      return {
+        success: false,
+        error: `No transcript data available for ${ticker} ${quarter}. This quarter may not have been analyzed yet. Please check if data exists in the database for symbol="${normalizedTicker}", year=${parsed.year}, quarter=${parsed.quarter}`,
+      }
     }
+
+    console.log('[getTranscript] AI analysis found, processing...')
 
     // Validate analysis data
     if (!Array.isArray(aiAnalysis.analysis)) {
-      console.error(`Invalid analysis format for ${ticker} ${quarter}`)
-      throw new Error(`Transcript data for ${ticker} ${quarter} is corrupted. Please contact support.`)
+      console.error('[getTranscript] Invalid analysis format:', typeof aiAnalysis.analysis)
+      return {
+        success: false,
+        error: `Transcript data for ${ticker} ${quarter} is in an invalid format. Please contact support.`,
+      }
     }
 
     // Convert AI analysis items to transcript highlights
@@ -214,9 +252,15 @@ export async function getTranscript(ticker: string, quarter: string): Promise<Tr
       .map((item) => convertAIAnalysisToHighlight(item))
       .filter((highlight) => highlight.text && highlight.text.trim() !== '')
 
+    console.log('[getTranscript] Converted highlights:', highlights.length)
+
     // Validate highlights
     if (highlights.length === 0) {
-      console.warn(`No valid highlights found for ${ticker} ${quarter}`)
+      console.warn('[getTranscript] No valid highlights found')
+      return {
+        success: false,
+        error: `No valid transcript highlights found for ${ticker} ${quarter}. The data may be incomplete.`,
+      }
     }
 
     // Create transcript sections (alternating regular and highlight sections)
@@ -230,14 +274,19 @@ export async function getTranscript(ticker: string, quarter: string): Promise<Tr
       highlights,
     }
 
+    console.log('[getTranscript] Successfully created transcript data')
+
     // Cache the data
     await kv.set(supabase, cacheKey, transcriptData)
 
-    return transcriptData
+    return { success: true, data: transcriptData }
   } catch (error) {
-    console.error(`Error fetching transcript for ${ticker} ${quarter}:`, error)
+    console.error('[getTranscript] Unexpected error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-    throw new Error(errorMessage)
+    return {
+      success: false,
+      error: `Failed to fetch transcript: ${errorMessage}`,
+    }
   }
 }
 

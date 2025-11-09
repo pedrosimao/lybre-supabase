@@ -29,17 +29,26 @@ import {
   TranscriptData,
   TranscriptHighlight,
   TranscriptSection,
+  Result,
 } from '@/actions/stocks'
 
 interface TranscriptDetailProps {
   ticker: string
-  initialData: TranscriptData
+  initialResult: Result<TranscriptData>
+  defaultQuarter: string
 }
 
-export default function TranscriptDetail({ ticker, initialData }: TranscriptDetailProps) {
+export default function TranscriptDetail({ ticker, initialResult, defaultQuarter }: TranscriptDetailProps) {
   const router = useRouter()
-  const [selectedQuarter, setSelectedQuarter] = useState<string>(initialData.quarter)
-  const [transcript, setTranscript] = useState<TranscriptData | null>(initialData)
+  const [selectedQuarter, setSelectedQuarter] = useState<string>(
+    initialResult.success ? initialResult.data.quarter : defaultQuarter
+  )
+  const [transcript, setTranscript] = useState<TranscriptData | null>(
+    initialResult.success ? initialResult.data : null
+  )
+  const [error, setError] = useState<string | null>(
+    initialResult.success ? null : initialResult.error
+  )
   const [loading, setLoading] = useState(false)
   const highlightRefs = useRef<{
     [key: string]: HTMLDivElement | null
@@ -56,11 +65,19 @@ export default function TranscriptDetail({ ticker, initialData }: TranscriptDeta
 
   const fetchTranscript = async () => {
     setLoading(true)
+    setError(null)
     try {
-      const data = await getTranscript(ticker, selectedQuarter)
-      setTranscript(data)
+      const result = await getTranscript(ticker, selectedQuarter)
+      if (result.success) {
+        setTranscript(result.data)
+        setError(null)
+      } else {
+        setTranscript(null)
+        setError(result.error)
+      }
     } catch (error) {
       console.error('Error fetching transcript:', error)
+      setError('An unexpected error occurred while fetching the transcript.')
     } finally {
       setLoading(false)
     }
@@ -154,7 +171,49 @@ export default function TranscriptDetail({ ticker, initialData }: TranscriptDeta
       <div className="flex-1 overflow-hidden flex min-h-0">
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-muted-foreground text-sm">Loading transcript...</p>
+            <div className="text-center space-y-3">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="text-muted-foreground text-sm">Loading transcript...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="flex-1 flex items-center justify-center p-6">
+            <Card className="glass-strong floating-sm border-red-primary/30 rounded-xl max-w-2xl w-full">
+              <div className="p-8 text-center space-y-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-primary/10 mb-2">
+                  <AlertCircle className="w-8 h-8 text-red-primary" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium text-foreground">Unable to Load Transcript</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+                    {error}
+                  </p>
+                </div>
+                <div className="flex gap-3 justify-center pt-4">
+                  <Button
+                    onClick={() => fetchTranscript()}
+                    variant="outline"
+                    size="sm"
+                    className="glass-subtle border-border/50 rounded-xl"
+                  >
+                    Try Again
+                  </Button>
+                  <Button
+                    onClick={() => router.push('/portfolio')}
+                    size="sm"
+                    className="gradient-green hover:opacity-90 transition-opacity text-white rounded-xl"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-1.5" />
+                    Back to Portfolio
+                  </Button>
+                </div>
+                <div className="pt-4 border-t border-border/30 mt-6">
+                  <p className="text-xs text-muted-foreground">
+                    If this issue persists, please check your database configuration or contact support.
+                  </p>
+                </div>
+              </div>
+            </Card>
           </div>
         ) : transcript ? (
           <>
@@ -392,7 +451,19 @@ export default function TranscriptDetail({ ticker, initialData }: TranscriptDeta
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-muted-foreground text-sm">No transcript data available</p>
+            <Card className="glass-strong floating-sm rounded-xl max-w-md">
+              <div className="p-8 text-center space-y-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/10 mb-2">
+                  <Info className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-base font-medium text-foreground">No Transcript Selected</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Please select a quarter from the dropdown above to view the transcript.
+                  </p>
+                </div>
+              </div>
+            </Card>
           </div>
         )}
       </div>

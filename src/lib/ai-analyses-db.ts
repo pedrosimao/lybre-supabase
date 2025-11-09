@@ -74,6 +74,13 @@ export async function fetchAIAnalysis(
   llmModel: string = 'claude-3-5-sonnet-20241022'
 ): Promise<AIAnalysisRecord | null> {
   try {
+    console.log('[fetchAIAnalysis] Querying database:', {
+      symbol,
+      year,
+      quarter,
+      llmModel,
+    })
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -86,16 +93,31 @@ export async function fetchAIAnalysis(
       .single()
 
     if (error) {
+      console.log('[fetchAIAnalysis] Database error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      })
       if (error.code === 'PGRST116') {
         // No rows found
+        console.log('[fetchAIAnalysis] No rows found for query')
         return null
       }
       throw error
     }
 
     if (!data) {
+      console.log('[fetchAIAnalysis] No data returned')
       return null
     }
+
+    console.log('[fetchAIAnalysis] Found record:', {
+      id: data.id,
+      symbol: data.symbol,
+      year: data.year,
+      quarter: data.quarter,
+      analysisItemCount: Array.isArray(data.analysis) ? data.analysis.length : 0,
+    })
 
     // Validate and sanitize the analysis array
     const validatedAnalysis = validateAnalysisArray(data.analysis)
@@ -118,6 +140,8 @@ export async function fetchLatestAIAnalysis(
   llmModel: string = 'claude-3-5-sonnet-20241022'
 ): Promise<AIAnalysisRecord | null> {
   try {
+    console.log('[fetchLatestAIAnalysis] Querying database:', { symbol, llmModel })
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -131,16 +155,31 @@ export async function fetchLatestAIAnalysis(
       .single()
 
     if (error) {
+      console.log('[fetchLatestAIAnalysis] Database error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      })
       if (error.code === 'PGRST116') {
         // No rows found
+        console.log('[fetchLatestAIAnalysis] No rows found')
         return null
       }
       throw error
     }
 
     if (!data) {
+      console.log('[fetchLatestAIAnalysis] No data returned')
       return null
     }
+
+    console.log('[fetchLatestAIAnalysis] Found latest record:', {
+      id: data.id,
+      symbol: data.symbol,
+      year: data.year,
+      quarter: data.quarter,
+      analysisItemCount: Array.isArray(data.analysis) ? data.analysis.length : 0,
+    })
 
     // Validate and sanitize the analysis array
     const validatedAnalysis = validateAnalysisArray(data.analysis)
@@ -196,15 +235,19 @@ export async function fetchAvailableQuarters(
  * Parse quarter string (e.g., "Q3 2024") to year and quarter number
  */
 export function parseQuarterString(quarterString: string): { year: number; quarter: number } | null {
+  console.log('[parseQuarterString] Input:', quarterString)
   const match = quarterString.match(/Q([1-4])\s+(\d{4})/)
   if (!match) {
+    console.log('[parseQuarterString] Failed to match pattern. Expected format: "Q1 2024", "Q2 2024", etc.')
     return null
   }
 
-  return {
+  const result = {
     quarter: parseInt(match[1]),
     year: parseInt(match[2])
   }
+  console.log('[parseQuarterString] Parsed:', result)
+  return result
 }
 
 /**

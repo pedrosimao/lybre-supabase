@@ -10,7 +10,7 @@ export default async function TranscriptPage({ params }: PageProps) {
   const defaultQuarter = 'Q3 2024'
 
   // Fetch initial transcript data on the server
-  const initialData = await getTranscript(ticker, defaultQuarter)
+  const result = await getTranscript(ticker, defaultQuarter)
 
-  return <TranscriptDetail ticker={ticker} initialData={initialData} />
+  return <TranscriptDetail ticker={ticker} initialResult={result} defaultQuarter={defaultQuarter} />
 }
