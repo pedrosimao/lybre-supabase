@@ -12,5 +12,9 @@ export default async function TranscriptPage({ params }: PageProps) {
   // Fetch initial transcript data on the server
   const result = await getTranscript(ticker, defaultQuarter)
 
-  return <TranscriptDetail ticker={ticker} initialResult={result} defaultQuarter={defaultQuarter} />
+  return (
+    <div className="h-screen w-full bg-background">
+      <TranscriptDetail ticker={ticker} initialResult={result} defaultQuarter={defaultQuarter} />
+    </div>
+  )
 }

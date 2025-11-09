@@ -482,7 +482,7 @@ function generateQuarters() {
     const maxQuarter = year === currentYear ? currentQuarter : 4
     for (let q = maxQuarter; q >= 1; q--) {
       quarters.push({
-        value: `${year}-Q${q}`,
+        value: `Q${q} ${year}`,  // Fixed: Use same format as label
         label: `Q${q} ${year}`,
       })
     }

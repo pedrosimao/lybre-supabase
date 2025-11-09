@@ -324,45 +324,19 @@ function convertAIAnalysisToHighlight(item: AIAnalysisItem): TranscriptHighlight
 
 /**
  * Create transcript sections from highlights
- * Formats the highlights as transcript sections with context
+ * Uses only the original_text from database - no hardcoded content
  */
 function createTranscriptSections(highlights: TranscriptHighlight[]): TranscriptSection[] {
   const sections: TranscriptSection[] = []
 
-  // Add an introduction section if we have highlights
-  if (highlights.length > 0) {
-    sections.push({
-      type: 'regular',
-      content:
-        "Good afternoon, and welcome to our earnings call. Today we'll discuss our financial results and business performance. Before we begin, I'd like to remind everyone that this call may contain forward-looking statements.",
-    })
-  }
-
-  // Add each highlight as a section
-  highlights.forEach((highlight, index) => {
+  // Add each highlight as a section (no hardcoded intro/outro text)
+  highlights.forEach((highlight) => {
     sections.push({
       type: 'highlight',
       content: highlight.text,
       highlight: highlight,
     })
-
-    // Add a transition section between highlights (but not after the last one)
-    if (index < highlights.length - 1) {
-      sections.push({
-        type: 'regular',
-        content: 'Moving on to the next topic...',
-      })
-    }
   })
-
-  // Add a closing section
-  if (highlights.length > 0) {
-    sections.push({
-      type: 'regular',
-      content:
-        "In closing, we're pleased with our results and the momentum we're seeing across the business. We remain focused on sustainable growth, operational excellence, and creating long-term value for our shareholders. We'll now open it up for questions.",
-    })
-  }
 
   return sections
 }
