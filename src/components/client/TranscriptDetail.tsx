@@ -107,8 +107,9 @@ export default function TranscriptDetail({
     <div className="h-full flex flex-col bg-background relative overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-1/3 w-[500px] h-[500px] bg-primary/6 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '10s' }} />
-        <div className="absolute bottom-0 left-1/3 w-[400px] h-[400px] bg-destructive/4 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '12s', animationDelay: '3s' }} />
+        <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-primary/8 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-destructive/6 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '12s', animationDelay: '4s' }} />
       </div>
 
       {/* Header */}
