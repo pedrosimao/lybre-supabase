@@ -1,4 +1,4 @@
-import { getTranscript } from '@/actions/stocks'
+import { getTranscript, getAvailableQuarters } from '@/actions/stocks'
 import TranscriptDetail from '@/components/client/TranscriptDetail'
 
 type PageProps = {
@@ -7,10 +7,27 @@ type PageProps = {
 
 export default async function TranscriptPage({ params }: PageProps) {
   const { ticker } = await params
-  const defaultQuarter = 'Q3 2024'
+
+  // Fetch available quarters from database
+  const availableQuarters = await getAvailableQuarters(ticker)
+
+  // Use the first (most recent) quarter as default, or fallback to Q3 2024
+  const defaultQuarter = availableQuarters.length > 0 ? availableQuarters[0] : 'Q3 2024'
+
+  console.log('[TranscriptPage] Available quarters:', availableQuarters)
+  console.log('[TranscriptPage] Default quarter:', defaultQuarter)
 
   // Fetch initial transcript data on the server
-  const initialData = await getTranscript(ticker, defaultQuarter)
+  const result = await getTranscript(ticker, defaultQuarter)
 
-  return <TranscriptDetail ticker={ticker} initialData={initialData} />
+  return (
+    <div className="h-screen w-full bg-background">
+      <TranscriptDetail
+        ticker={ticker}
+        initialResult={result}
+        defaultQuarter={defaultQuarter}
+        availableQuarters={availableQuarters}
+      />
+    </div>
+  )
 }
