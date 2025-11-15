@@ -1,26 +1,36 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { getRequestEvent } from 'solid-js/web'
+import { getCookie, setCookie, deleteCookie } from 'vinxi/http'
 
-export async function createClient() {
-  const cookieStore = await cookies()
+export function createClient() {
+  const event = getRequestEvent()
 
-  return createServerClient(
+  if (!event) {
+    throw new Error('No request event available')
+  }
+
+  return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing user sessions.
-          }
+      auth: {
+        flowType: 'pkce',
+        autoRefreshToken: true,
+        detectSessionInUrl: false,
+        persistSession: true,
+        storage: {
+          getItem: (key: string) => {
+            return getCookie(event, key) ?? null
+          },
+          setItem: (key: string, value: string) => {
+            setCookie(event, key, value, {
+              maxAge: 60 * 60 * 24 * 7, // 1 week
+              path: '/',
+            })
+          },
+          removeItem: (key: string) => {
+            deleteCookie(event, key)
+          },
         },
       },
     }
