@@ -15,8 +15,8 @@ export async function signUp(formData: FormData) {
 
   try {
     const supabaseAdmin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      import.meta.env.VITE_SUPABASE_URL!,
+      import.meta.env.SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY!
     )
 
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
@@ -42,7 +42,7 @@ export async function signUp(formData: FormData) {
 
     return new Response(null, {
       status: 302,
-      headers: { Location: '/portfolio' }
+      headers: { Location: '/portfolio' },
     })
   } catch (error) {
     return { error: 'Failed to create user' }
@@ -72,7 +72,7 @@ export async function signIn(formData: FormData) {
 
   return new Response(null, {
     status: 302,
-    headers: { Location: '/portfolio' }
+    headers: { Location: '/portfolio' },
   })
 }
 
@@ -83,7 +83,7 @@ export async function signOut() {
   await supabase.auth.signOut()
   return new Response(null, {
     status: 302,
-    headers: { Location: '/login' }
+    headers: { Location: '/login' },
   })
 }
 
