@@ -1,11 +1,10 @@
-'use server'
-
-import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
+import { createClient } from '~/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 
+// Form actions - plain server functions that handle FormData
 export async function signUp(formData: FormData) {
+  'use server'
+
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const name = formData.get('name') as string
@@ -15,10 +14,9 @@ export async function signUp(formData: FormData) {
   }
 
   try {
-    // Create admin client for user creation
     const supabaseAdmin = createAdminClient(
       import.meta.env.VITE_SUPABASE_URL!,
-      import.meta.env.VITE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY!
+      import.meta.env.SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY!
     )
 
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
@@ -32,8 +30,7 @@ export async function signUp(formData: FormData) {
       return { error: error.message }
     }
 
-    // Now sign in the user
-    const supabase = await createClient()
+    const supabase = createClient()
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -43,14 +40,18 @@ export async function signUp(formData: FormData) {
       return { error: signInError.message }
     }
 
-    revalidatePath('/', 'layout')
-    redirect('/portfolio')
+    return new Response(null, {
+      status: 302,
+      headers: { Location: '/portfolio' },
+    })
   } catch (error) {
     return { error: 'Failed to create user' }
   }
 }
 
 export async function signIn(formData: FormData) {
+  'use server'
+
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
@@ -58,7 +59,7 @@ export async function signIn(formData: FormData) {
     return { error: 'Email and password are required' }
   }
 
-  const supabase = await createClient()
+  const supabase = createClient()
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -69,19 +70,28 @@ export async function signIn(formData: FormData) {
     return { error: error.message }
   }
 
-  revalidatePath('/', 'layout')
-  redirect('/portfolio')
+  return new Response(null, {
+    status: 302,
+    headers: { Location: '/portfolio' },
+  })
 }
 
 export async function signOut() {
-  const supabase = await createClient()
+  'use server'
+
+  const supabase = createClient()
   await supabase.auth.signOut()
-  revalidatePath('/', 'layout')
-  redirect('/login')
+  return new Response(null, {
+    status: 302,
+    headers: { Location: '/login' },
+  })
 }
 
+// Regular server function - not a form action
 export async function getUser() {
-  const supabase = await createClient()
+  'use server'
+
+  const supabase = createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

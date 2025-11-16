@@ -1,116 +1,69 @@
-"use client";
+import { splitProps, type JSX } from 'solid-js'
+import { cn } from '~/lib/utils'
 
-import * as React from "react";
-
-import { cn } from "./utils";
-
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+export function Table(props: JSX.TableHTMLAttributes<HTMLTableElement>) {
+  const [local, others] = splitProps(props, ['class'])
   return (
-    <div
-      data-slot="table-container"
-      className="relative w-full overflow-x-auto"
-    >
-      <table
-        data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
-      />
+    <div class="relative w-full overflow-auto">
+      <table class={cn('w-full caption-bottom text-sm', local.class)} {...others} />
     </div>
-  );
+  )
 }
 
-function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
-  return (
-    <thead
-      data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
-      {...props}
-    />
-  );
+export function TableHeader(props: JSX.HTMLAttributes<HTMLTableSectionElement>) {
+  const [local, others] = splitProps(props, ['class'])
+  return <thead class={cn('[&_tr]:border-b', local.class)} {...others} />
 }
 
-function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
-  return (
-    <tbody
-      data-slot="table-body"
-      className={cn("[&_tr:last-child]:border-0", className)}
-      {...props}
-    />
-  );
+export function TableBody(props: JSX.HTMLAttributes<HTMLTableSectionElement>) {
+  const [local, others] = splitProps(props, ['class'])
+  return <tbody class={cn('[&_tr:last-child]:border-0', local.class)} {...others} />
 }
 
-function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
+export function TableFooter(props: JSX.HTMLAttributes<HTMLTableSectionElement>) {
+  const [local, others] = splitProps(props, ['class'])
   return (
     <tfoot
-      data-slot="table-footer"
-      className={cn(
-        "bg-muted/50 border-t font-medium [&>tr]:last:border-b-0",
-        className,
-      )}
-      {...props}
+      class={cn('border-t bg-muted/50 font-medium [&>tr]:last:border-b-0', local.class)}
+      {...others}
     />
-  );
+  )
 }
 
-function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
+export function TableRow(props: JSX.HTMLAttributes<HTMLTableRowElement>) {
+  const [local, others] = splitProps(props, ['class'])
   return (
     <tr
-      data-slot="table-row"
-      className={cn(
-        "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
-        className,
+      class={cn(
+        'border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted',
+        local.class
       )}
-      {...props}
+      {...others}
     />
-  );
+  )
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+export function TableHead(props: JSX.ThHTMLAttributes<HTMLTableCellElement>) {
+  const [local, others] = splitProps(props, ['class'])
   return (
     <th
-      data-slot="table-head"
-      className={cn(
-        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-        className,
+      class={cn(
+        'h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
+        local.class
       )}
-      {...props}
+      {...others}
     />
-  );
+  )
 }
 
-function TableCell({ className, ...props }: React.ComponentProps<"td">) {
+export function TableCell(props: JSX.TdHTMLAttributes<HTMLTableCellElement>) {
+  const [local, others] = splitProps(props, ['class'])
   return (
-    <td
-      data-slot="table-cell"
-      className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-        className,
-      )}
-      {...props}
-    />
-  );
+    <td class={cn('p-4 align-middle [&:has([role=checkbox])]:pr-0', local.class)} {...others} />
+  )
 }
 
-function TableCaption({
-  className,
-  ...props
-}: React.ComponentProps<"caption">) {
-  return (
-    <caption
-      data-slot="table-caption"
-      className={cn("text-muted-foreground mt-4 text-sm", className)}
-      {...props}
-    />
-  );
+export function TableCaption(props: JSX.HTMLAttributes<HTMLTableCaptionElement>) {
+  const [local, others] = splitProps(props, ['class'])
+  return <caption class={cn('mt-4 text-sm text-muted-foreground', local.class)} {...others} />
 }
-
-export {
-  Table,
-  TableHeader,
-  TableBody,
-  TableFooter,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
-};
