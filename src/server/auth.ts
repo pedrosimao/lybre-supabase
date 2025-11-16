@@ -3,9 +3,10 @@ import { redirect } from '@solidjs/router'
 import { revalidate, action } from '@solidjs/router'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 
+// Form actions - these use action() wrapper as they handle FormData
 export const signUp = action(async (formData: FormData) => {
   'use server'
-  
+
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const name = formData.get('name') as string
@@ -15,7 +16,6 @@ export const signUp = action(async (formData: FormData) => {
   }
 
   try {
-    // Create admin client for user creation
     const supabaseAdmin = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -32,7 +32,6 @@ export const signUp = action(async (formData: FormData) => {
       return { error: error.message }
     }
 
-    // Now sign in the user
     const supabase = createClient()
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
@@ -52,7 +51,7 @@ export const signUp = action(async (formData: FormData) => {
 
 export const signIn = action(async (formData: FormData) => {
   'use server'
-  
+
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
@@ -77,16 +76,17 @@ export const signIn = action(async (formData: FormData) => {
 
 export const signOut = action(async () => {
   'use server'
-  
+
   const supabase = createClient()
   await supabase.auth.signOut()
   revalidate('user')
   return redirect('/login')
 })
 
+// Regular server function - not a form action
 export async function getUser() {
   'use server'
-  
+
   const supabase = createClient()
   const {
     data: { user },

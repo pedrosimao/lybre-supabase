@@ -1,9 +1,18 @@
-import { createAsync, redirect, cache } from '@solidjs/router'
+import { cache } from '@solidjs/router'
+import { redirect } from '@solidjs/router'
 import { getUser } from '~/server/auth'
 
 const loadUser = cache(async () => {
   'use server'
-  return await getUser()
+
+  const user = await getUser()
+
+  // Server-side redirect - throw redirect response
+  if (!user) {
+    throw redirect('/login')
+  }
+
+  throw redirect('/portfolio')
 }, 'user')
 
 export const route = {
@@ -11,11 +20,6 @@ export const route = {
 }
 
 export default function HomePage() {
-  const user = createAsync(() => loadUser())
-
-  if (!user()) {
-    return redirect('/login')
-  }
-
-  return redirect('/portfolio')
+  loadUser() // This will trigger the redirect
+  return null
 }

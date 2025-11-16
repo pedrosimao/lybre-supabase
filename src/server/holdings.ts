@@ -1,5 +1,5 @@
 import * as kv from '~/lib/kv-store'
-import { revalidate, action } from '@solidjs/router'
+import { revalidate } from '@solidjs/router'
 import { createClient } from '~/lib/supabase/server'
 
 export type Holding = {
@@ -36,7 +36,7 @@ export async function getHoldings(portfolioId: string): Promise<Holding[]> {
   }
 }
 
-export const addHolding = action(async (input: HoldingInput): Promise<Holding> => {
+export async function addHolding(input: HoldingInput): Promise<Holding> {
   'use server'
 
   try {
@@ -54,12 +54,12 @@ export const addHolding = action(async (input: HoldingInput): Promise<Holding> =
     console.error('Error adding holding:', error)
     throw new Error('Failed to add holding')
   }
-})
+}
 
-export const updateHolding = action(async (
+export async function updateHolding(
   holdingId: string,
   updates: Partial<Pick<Holding, 'quantity' | 'purchasePrice' | 'purchaseDate'>>
-): Promise<Holding> => {
+): Promise<Holding> {
   'use server'
 
   try {
@@ -82,9 +82,9 @@ export const updateHolding = action(async (
     console.error('Error updating holding:', error)
     throw new Error('Failed to update holding')
   }
-})
+}
 
-export const deleteHolding = action(async (holdingId: string): Promise<void> => {
+export async function deleteHolding(holdingId: string): Promise<void> {
   'use server'
 
   try {
@@ -100,4 +100,4 @@ export const deleteHolding = action(async (holdingId: string): Promise<void> => 
     console.error('Error deleting holding:', error)
     throw new Error('Failed to delete holding')
   }
-})
+}
