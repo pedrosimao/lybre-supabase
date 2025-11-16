@@ -1,25 +1,23 @@
-import { cache } from '@solidjs/router'
-import { redirect } from '@solidjs/router'
 import { getUser } from '~/server/auth'
 
-const loadUser = cache(async () => {
+export async function GET() {
   'use server'
 
   const user = await getUser()
 
-  // Server-side redirect - throw redirect response
   if (!user) {
-    throw redirect('/login')
+    return new Response(null, {
+      status: 302,
+      headers: { Location: '/login' }
+    })
   }
 
-  throw redirect('/portfolio')
-}, 'user')
-
-export const route = {
-  preload: () => loadUser(),
+  return new Response(null, {
+      status: 302,
+    headers: { Location: '/portfolio' }
+  })
 }
 
 export default function HomePage() {
-  loadUser() // This will trigger the redirect
   return null
 }

@@ -1,20 +1,16 @@
 import { useParams } from '@solidjs/router'
-import { createAsync, cache } from '@solidjs/router'
+import { createAsync } from '@solidjs/router'
 import { Show } from 'solid-js'
 import { getTranscript, getAvailableQuarters } from '~/server/stocks'
 
-const loadTranscriptData = cache(async (ticker: string) => {
+async function loadTranscriptData(ticker: string) {
   'use server'
-  
+
   const availableQuarters = await getAvailableQuarters(ticker)
   const defaultQuarter = availableQuarters[0] || 'Q3 2024'
   const result = await getTranscript(ticker, defaultQuarter)
 
   return { result, defaultQuarter, availableQuarters }
-}, 'transcript-data')
-
-export const route = {
-  preload: ({ params }: { params: { ticker: string } }) => loadTranscriptData(params.ticker),
 }
 
 export default function TranscriptPage() {

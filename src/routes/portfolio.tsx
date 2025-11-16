@@ -1,4 +1,4 @@
-import { createAsync, redirect, cache } from '@solidjs/router'
+import { createAsync } from '@solidjs/router'
 import { Show } from 'solid-js'
 import { getUser } from '~/server/auth'
 import { getPortfolios } from '~/server/portfolio'
@@ -6,12 +6,15 @@ import { getHoldings } from '~/server/holdings'
 import { getStockPrice } from '~/server/stocks'
 import type { EnrichedHolding } from '~/lib/types'
 
-const loadPortfolioData = cache(async () => {
+async function loadPortfolioData() {
   'use server'
-  
+
   const user = await getUser()
   if (!user) {
-    throw redirect('/login')
+    throw new Response(null, {
+      status: 302,
+      headers: { Location: '/login' }
+    })
   }
 
   const portfolios = await getPortfolios(user.id)
@@ -21,7 +24,7 @@ const loadPortfolioData = cache(async () => {
   if (portfolios.length > 0) {
     const portfolio = portfolios[0]
     portfolioId = portfolio.id
-    
+
     const rawHoldings = await getHoldings(portfolio.id)
     holdings = await Promise.all(
       rawHoldings.map(async (holding) => {
@@ -49,10 +52,6 @@ const loadPortfolioData = cache(async () => {
   }
 
   return { user, portfolioId, holdings }
-}, 'portfolio-data')
-
-export const route = {
-  preload: () => loadPortfolioData(),
 }
 
 export default function PortfolioPage() {
