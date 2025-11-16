@@ -1,67 +1,47 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { createMiddleware } from '@solidjs/start/middleware'
+import { getCookie, setCookie } from 'vinxi/http'
+import { createClient } from '@supabase/supabase-js'
 
-export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
+export default createMiddleware({
+  onRequest: async (event) => {
+    const url = new URL(event.request.url)
+    
+    // Skip static files and API routes
+    if (
+      url.pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico|css|js)$/) ||
+      url.pathname.startsWith('/_')
+    ) {
+      return
     }
-  )
 
-  // Refreshing the auth token
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    // Create Supabase client with cookie handling
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          storage: {
+            getItem: (key) => getCookie(event, key) ?? null,
+            setItem: (key, value) => setCookie(event, key, value, { maxAge: 60 * 60 * 24 * 7, path: '/' }),
+            removeItem: (key) => setCookie(event, key, '', { maxAge: 0 }),
+          },
+        },
+      }
+    )
 
-  // Redirect logic
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login')
-  const isProtectedPage = request.nextUrl.pathname.startsWith('/portfolio')
+    const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user && isProtectedPage) {
-    // Redirect to login if user is not authenticated
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/login'
-    return NextResponse.redirect(redirectUrl)
-  }
+    const isAuthPage = url.pathname.startsWith('/login')
+    const isProtectedPage = url.pathname.startsWith('/portfolio') || url.pathname.startsWith('/transcript')
 
-  if (user && isAuthPage) {
-    // Redirect to portfolio if user is already authenticated
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/portfolio'
-    return NextResponse.redirect(redirectUrl)
-  }
+    // Redirect to login if user is not authenticated and trying to access protected page
+    if (!user && isProtectedPage) {
+      return Response.redirect(new URL('/login', event.request.url), 302)
+    }
 
-  return supabaseResponse
-}
-
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
-}
+    // Redirect to portfolio if user is already authenticated and trying to access login
+    if (user && isAuthPage) {
+      return Response.redirect(new URL('/portfolio', event.request.url), 302)
+    }
+  },
+})

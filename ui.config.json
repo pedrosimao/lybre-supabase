@@ -1,0 +1,10 @@
+{
+  "typescript": true,
+  "globalCSS": "src/app.css",
+  "tailwindConfig": "tailwind.config.ts",
+  "srcDir": "~/*",
+  "aliases": {
+    "components": "~/components",
+    "utils": "~/lib/utils"
+  }
+}
