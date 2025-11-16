@@ -1,10 +1,8 @@
 import { createClient } from '~/lib/supabase/server'
-import { redirect } from '@solidjs/router'
-import { revalidate, action } from '@solidjs/router'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 
-// Form actions - these use action() wrapper as they handle FormData
-export const signUp = action(async (formData: FormData) => {
+// Form actions - plain server functions that handle FormData
+export async function signUp(formData: FormData) {
   'use server'
 
   const email = formData.get('email') as string
@@ -42,14 +40,16 @@ export const signUp = action(async (formData: FormData) => {
       return { error: signInError.message }
     }
 
-    revalidate('user')
-    return redirect('/portfolio')
+    return new Response(null, {
+      status: 302,
+      headers: { Location: '/portfolio' }
+    })
   } catch (error) {
     return { error: 'Failed to create user' }
   }
-})
+}
 
-export const signIn = action(async (formData: FormData) => {
+export async function signIn(formData: FormData) {
   'use server'
 
   const email = formData.get('email') as string
@@ -70,18 +70,22 @@ export const signIn = action(async (formData: FormData) => {
     return { error: error.message }
   }
 
-  revalidate('user')
-  return redirect('/portfolio')
-})
+  return new Response(null, {
+    status: 302,
+    headers: { Location: '/portfolio' }
+  })
+}
 
-export const signOut = action(async () => {
+export async function signOut() {
   'use server'
 
   const supabase = createClient()
   await supabase.auth.signOut()
-  revalidate('user')
-  return redirect('/login')
-})
+  return new Response(null, {
+    status: 302,
+    headers: { Location: '/login' }
+  })
+}
 
 // Regular server function - not a form action
 export async function getUser() {

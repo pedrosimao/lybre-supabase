@@ -1,5 +1,4 @@
 import * as kv from '~/lib/kv-store'
-import { revalidate } from '@solidjs/router'
 import { createClient } from '~/lib/supabase/server'
 
 export type Holding = {
@@ -48,7 +47,6 @@ export async function addHolding(input: HoldingInput): Promise<Holding> {
       createdAt: new Date().toISOString(),
     }
     await kv.set(supabase, holdingId, holding)
-    revalidate('portfolio-data')
     return holding
   } catch (error) {
     console.error('Error adding holding:', error)
@@ -76,7 +74,6 @@ export async function updateHolding(
     }
 
     await kv.set(supabase, holdingId, updatedHolding)
-    revalidate('portfolio-data')
     return updatedHolding
   } catch (error) {
     console.error('Error updating holding:', error)
@@ -95,7 +92,6 @@ export async function deleteHolding(holdingId: string): Promise<void> {
     }
 
     await kv.del(supabase, holdingId)
-    revalidate('portfolio-data')
   } catch (error) {
     console.error('Error deleting holding:', error)
     throw new Error('Failed to delete holding')

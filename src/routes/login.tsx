@@ -1,18 +1,15 @@
 import { createSignal } from 'solid-js'
-import { useAction } from '@solidjs/router'
 import { signIn } from '~/server/auth'
 
 export default function LoginPage() {
   const [email, setEmail] = createSignal('')
   const [password, setPassword] = createSignal('')
   const [error, setError] = createSignal('')
-  
-  const signInAction = useAction(signIn)
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget as HTMLFormElement)
-    const result = await signInAction(formData)
+    const result = await signIn(formData)
     if (result?.error) {
       setError(result.error)
     }

@@ -1,5 +1,4 @@
 import * as kv from '~/lib/kv-store'
-import { revalidate } from '@solidjs/router'
 import { createClient } from '~/lib/supabase/server'
 
 export type Portfolio = {
@@ -35,7 +34,6 @@ export async function createPortfolio(userId: string, name: string): Promise<Por
       createdAt: new Date().toISOString(),
     }
     await kv.set(supabase, portfolioId, portfolio)
-    revalidate('portfolio-data')
     return portfolio
   } catch (error) {
     console.error('Error creating portfolio:', error)
@@ -49,7 +47,6 @@ export async function deletePortfolio(portfolioId: string): Promise<void> {
   try {
     const supabase = createClient()
     await kv.del(supabase, portfolioId)
-    revalidate('portfolio-data')
   } catch (error) {
     console.error('Error deleting portfolio:', error)
     throw new Error('Failed to delete portfolio')

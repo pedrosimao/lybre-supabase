@@ -1,19 +1,11 @@
-import { Router } from '@solidjs/router'
-import { FileRoutes } from '@solidjs/start/router'
-import { Suspense } from 'solid-js'
+import { Suspense, type ParentProps } from 'solid-js'
 import { ThemeProvider } from '~/components/theme-provider'
 import './app.css'
 
-export default function App() {
+export default function App(props: ParentProps) {
   return (
-    <Router
-      root={(props) => (
-        <ThemeProvider attribute="class" defaultTheme="dark">
-          <Suspense>{props.children}</Suspense>
-        </ThemeProvider>
-      )}
-    >
-      <FileRoutes />
-    </Router>
+    <ThemeProvider attribute="class" defaultTheme="dark">
+      <Suspense>{props.children}</Suspense>
+    </ThemeProvider>
   )
 }
